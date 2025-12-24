@@ -1,3 +1,4 @@
+// 상품페이지 메인화면 헤더 컴포넌트
 import logo from "../../../assets/goodsPage/logo.svg";
 import notice from "../../../assets/goodsPage/notice.svg";
 
