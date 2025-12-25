@@ -1,4 +1,4 @@
-// 검색 결과 화면 및 검색화면 검색바
+// 검색 결과 화면 및 검색화면 검색바 헤더
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import back from "../assets/all/back.svg";
@@ -9,6 +9,7 @@ export default function SearchBar2() {
   const [searchParams] = useSearchParams();
 
   // 카테고리, 인기검색어 임시 구분
+  // 서버 연동 후 param 변경 필요 가능성 있음
   const keywordParam = searchParams.get("keyword") ?? "";
   const sourceParam = searchParams.get("source") ?? "";
 
@@ -51,7 +52,6 @@ export default function SearchBar2() {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 setValue("");
-                setFocused(false);
               }}
             >
               <img src={cancel} alt="취소" />
