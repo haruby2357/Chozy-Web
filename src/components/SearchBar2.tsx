@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import back from "../assets/all/back.svg";
 import cancel from "../assets/all/cancel.svg";
 
+const MAX_LEN = 50;
+
 export default function SearchBar2() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -44,7 +46,9 @@ export default function SearchBar2() {
             placeholder="검색어를 입력하세요."
             className={`flex-1 outline-none bg-transparent text-[16px] font-medium
         placeholder:text-[#B9B9B9] focus:placeholder:text-[#191919]
+        whitespace-nowrap overflow-hidden
         ${sourceParam === "category" && !isActive ? "text-[#66021F]" : "text-[#191919]"}`}
+            maxLength={MAX_LEN}
           />
           {isActive && value.length > 0 && (
             <button
