@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "../features/goodsPage/Home";
+import SearchResult from "../features/goodsPage/SearchResult";
 
 export default function AppRouter() {
   return (
@@ -7,6 +8,7 @@ export default function AppRouter() {
     // 추후 개별 페이지 구현 시 교체 예정
     <Routes>
       <Route path="/goods" element={<Home />} />
+      <Route path="/goods/search" element={<SearchResult />} />
       <Route path="/community" element={<Home />} />
       <Route path="/heart" element={<Home />} />
       <Route path="/mypage" element={<Home />} />
