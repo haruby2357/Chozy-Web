@@ -129,6 +129,7 @@ function Home() {
         <div className="w-full bg-white grid grid-cols-4 grid-rows-2 px-4 gap-2">
           {categories.map((category) => (
             <Category
+              key={category.label}
               imgSrc={category.imgSrc}
               label={category.label}
               onClick={() => {
