@@ -1,0 +1,45 @@
+# "upstream 레포"의 main에 push가 발생하면
+# "개인 fork 레포"의 main을 upstream main과 강제로 동일하게 맞춘다.
+
+name: Sync Fork with Upstream
+
+on:
+  # upstream 레포의 main 브랜치에 push가 발생할 때만 실행
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    # 안전장치:upstream 레포에서만 실행되도록 가드 (fork에서는 Skipped가 정상)
+    if: github.repository == 'Konkuk-KUIT/Chozy-Web'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out upstream repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # 디버그용: 어떤 레포에서 실행 중인지 확인
+      # - name: Debug repository value
+      #   run: echo "github.repository = ${{ github.repository }}"
+
+      - name: Force push upstream main to fork main
+        # 개인 fork에 push 권한이 있는 PAT 등록
+        # PAT는 upstream 레포의 Secrets에 등록 완료
+
+        env:
+          GH_USER: haruby2357
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          FORK_REPO: Chozy-Web
+        run: |
+          # upstream main을 fork main에 강제로 덮어쓰기
+          git push -f "https://${GH_USER}:${GH_TOKEN}@github.com/${GH_USER}/${FORK_REPO}.git" main:main
