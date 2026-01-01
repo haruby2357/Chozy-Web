@@ -8,8 +8,7 @@ export default function AppRouter() {
     // 추후 개별 페이지 구현 시 교체 예정
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/goods" element={<Home />} />
-      <Route path="/goods/search" element={<SearchResult />} />
+      <Route path="/home/products" element={<SearchResult />} />
       <Route path="/community" element={<Home />} />
       <Route path="/heart" element={<Home />} />
       <Route path="/mypage" element={<Home />} />

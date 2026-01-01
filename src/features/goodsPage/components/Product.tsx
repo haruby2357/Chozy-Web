@@ -3,62 +3,71 @@ import heartOff from "../../../assets/goodsPage/heartOff.svg";
 import star from "../../../assets/goodsPage/star.svg";
 
 type ProductProps = {
-  source: string;
-  imgUrl: string;
-  productUrl: string;
+  productId: number;
   name: string;
-  price: number;
-  discountRate?: number;
-  discountPrice?: number;
+  originalPrice: number;
+  discountRate: number; // 0이면 할인 없음
+  imageUrl: string;
+  productUrl: string;
   rating: number;
-  reviewCnt: number;
+  reviewCount: number;
   deliveryFee: number;
-  liked: boolean;
-  onToggleLike?: () => void;
+  status: boolean; // 좋아요(찜) 상태로 사용
+  onToggleLike?: (productId: number) => void;
 };
 
+const calcFinalPrice = (originalPrice: number, discountRate: number) =>
+  Math.round((originalPrice * (100 - discountRate)) / 100);
+
 export default function Product({
-  source,
-  imgUrl,
-  productUrl,
+  productId,
   name,
-  price,
+  originalPrice,
   discountRate,
-  discountPrice,
+  imageUrl,
+  productUrl,
   rating,
-  reviewCnt,
+  reviewCount,
   deliveryFee,
-  liked,
+  status,
   onToggleLike,
 }: ProductProps) {
+  const hasDiscount = discountRate > 0;
+  const finalPrice = hasDiscount
+    ? calcFinalPrice(originalPrice, discountRate)
+    : originalPrice;
+
+  console.log("Product props", {
+    productId,
+    originalPrice,
+    discountRate,
+    rating,
+    reviewCount,
+    deliveryFee,
+  });
   return (
     <div className="flex flex-col gap-2 mx-auto">
       {/* 상품사진 */}
       <div className="relative w-full flex justify-center">
         <div className="relative w-[177px] h-[177px]">
           <img
-            src={imgUrl}
+            src={imageUrl}
             alt={name}
             onClick={() => window.open(productUrl, "_blank")}
             className="cursor-pointer"
           />
-          <span
-            className="
-        absolute top-[6px] left-[6px]
-        items-center justify-center
-        px-1 py-[2px]
-        rounded-[2px]
-        border border-[#F9F9F9]
-        bg-white/70
-        text-[#787878] text-[12px]"
+
+          <button
+            type="button"
+            onClick={() => onToggleLike?.(productId)}
+            className="absolute bottom-3 right-3"
+            aria-label={status ? "좋아요 해제" : "좋아요"}
           >
-            {source}
-          </span>
-          <button onClick={onToggleLike} className="absolute bottom-3 right-3">
-            <img src={liked ? heartOn : heartOff} alt="좋아요" />
+            <img src={status ? heartOn : heartOff} alt="좋아요" />
           </button>
         </div>
       </div>
+
       {/* 상품명 */}
       <p
         onClick={() => window.open(productUrl, "_blank")}
@@ -66,12 +75,13 @@ export default function Product({
       >
         {name}
       </p>
+
       {/* 상품가격 */}
       <div>
-        {discountPrice ? (
+        {hasDiscount ? (
           <div className="flex flex-col gap-[2px]">
             <span className="text-[14px] text-[#B5B5B5] line-through">
-              {price.toLocaleString()}원
+              {originalPrice.toLocaleString()}원
             </span>
             <div className="flex flex-row gap-1">
               <span className="text-[#66021F] text-[18px] font-bold">
@@ -79,16 +89,17 @@ export default function Product({
               </span>
               <span className="text-[#191919]">
                 <span className="text-[18px] font-bold">
-                  {discountPrice.toLocaleString()}
+                  {finalPrice.toLocaleString()}
                 </span>
                 <span className="text-[16px] font-semibold">원</span>
               </span>
             </div>
           </div>
         ) : (
-          <span>{price.toLocaleString()}원</span>
+          <span>{originalPrice.toLocaleString()}원</span>
         )}
       </div>
+
       <div>
         {/* 별점/리뷰 */}
         <div className="flex flex-row gap-[2px] items-center">
@@ -96,10 +107,11 @@ export default function Product({
           <span className="text-[#B5B5B5] text-[13px]">
             <span>{rating}</span>
             <span>
-              ({reviewCnt > 9999 ? "9,999+" : reviewCnt.toLocaleString()})
+              ({reviewCount > 9999 ? "9,999+" : reviewCount.toLocaleString()})
             </span>
           </span>
         </div>
+
         {/* 배달비 */}
         <span className="text-[#B5B5B5] text-[13px]">
           {deliveryFee === 0

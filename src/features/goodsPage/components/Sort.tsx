@@ -6,13 +6,13 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState } from "react";
 import filter from "../../../assets/all/filter.svg";
 
-export type SortKey = "relevance" | "priceAsc" | "priceDesc" | "ratingDesc";
+export type SortKey = "RELEVANCE" | "PRICE_ASC" | "PRICE_DESC" | "RATING";
 
 const SORT_LABEL: Record<SortKey, string> = {
-  relevance: "관련순",
-  priceAsc: "낮은 가격순",
-  priceDesc: "높은 가격순",
-  ratingDesc: "별점순",
+  RELEVANCE: "관련순",
+  PRICE_ASC: "낮은 가격순",
+  PRICE_DESC: "높은 가격순",
+  RATING: "별점순",
 };
 
 type FilterProps = {
