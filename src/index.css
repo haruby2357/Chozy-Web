@@ -65,3 +65,10 @@ button {
     color: #747bff;
   }
 }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Safari, iOS, Firefox Android */
+  text-size-adjust: 100%;
+  /* Chrome, Edge, 표준 */
+}

@@ -4,6 +4,9 @@ import SearchBar2 from "../../components/SearchBar2";
 import Sort, { type SortKey } from "./components/Sort";
 import Product from "./components/Product";
 
+import FilterSheet from "./components/filter/FIlterSheet";
+import type { FilterTab } from "./components/filter/types";
+
 type ApiCategory =
   | "FASHION"
   | "BEAUTY"
@@ -60,6 +63,10 @@ export default function SearchResult() {
   const [productList, setProductList] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // 필터 바텀시트 테스트용 상태(DEV ONLY)
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterDefaultTab, setFilterDefaultTab] = useState<FilterTab>("price");
+
   // API 요청 URL 생성
   const requestUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -89,8 +96,7 @@ export default function SearchResult() {
 
   const handleSortChange = (nextSort: SortKey) => {
     const nextParams = new URLSearchParams(searchParams);
-
-    nextParams.set("sort", nextSort); // sort만 교체
+    nextParams.set("sort", nextSort);
     setSearchParams(nextParams);
   };
 
@@ -108,10 +114,45 @@ export default function SearchResult() {
   return (
     <div className="h-full bg-white">
       <SearchBar2 />
-      {/* 상품 검색 화면 완성 시 검색창 누르면 상품 검색 화면으로 이동 추가 */}
+
       <div className="h-full overflow-y-auto scrollbar-hide pt-[68px]">
         {/* 추후 필터 컴포넌트 삽입 */}
         <div className="h-1 bg-[#f9f9f9]" />
+
+        {/* DEV ONLY: 필터 바텀시트 테스트 진입 버튼 */}
+        <div className="bg-white px-4 pt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setFilterDefaultTab("price");
+              setFilterOpen(true);
+            }}
+            className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
+          >
+            필터 테스트(가격)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setFilterDefaultTab("rating");
+              setFilterOpen(true);
+            }}
+            className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
+          >
+            필터 테스트(별점)
+          </button>
+        </div>
+
+        <FilterSheet
+          open={filterOpen}
+          onOpenChange={setFilterOpen}
+          defaultTab={filterDefaultTab}
+          onConfirm={(state) => {
+            // TODO: 필터 버튼 라벨/검색 파라미터로 연결
+            console.log("필터 확인:", state);
+          }}
+        />
 
         {isEmpty ? (
           <div className="bg-white px-4">
