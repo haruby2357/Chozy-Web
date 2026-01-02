@@ -116,11 +116,8 @@ export default function SearchResult() {
       <SearchBar2 />
 
       <div className="h-full overflow-y-auto scrollbar-hide pt-[68px]">
-        {/* 추후 필터 컴포넌트 삽입 */}
-        <div className="h-1 bg-[#f9f9f9]" />
-
         {/* DEV ONLY: 필터 바텀시트 테스트 진입 버튼 */}
-        <div className="bg-white px-4 pt-4 flex gap-2">
+        <div className="bg-white px-4 pb-[9px] flex gap-2">
           <button
             type="button"
             onClick={() => {
@@ -153,6 +150,8 @@ export default function SearchResult() {
             console.log("필터 확인:", state);
           }}
         />
+
+        <div className="h-1 bg-[#f9f9f9]" />
 
         {isEmpty ? (
           <div className="bg-white px-4">

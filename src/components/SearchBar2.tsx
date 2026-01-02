@@ -74,7 +74,7 @@ export default function SearchBar2() {
   };
 
   return (
-    <header className="fixed top-0 left-1/2 -translate-x-1/2 z-50 w-[390px] bg-white pt-[9px] px-4 pb-3">
+    <header className="absolute top-0 left-1/2 -translate-x-1/2 z-50 w-[390px] bg-white pt-[9px] px-4 pb-3">
       <div className="flex flex-row gap-3 items-center justify-center">
         <button type="button" className="w-6 h-6" onClick={() => navigate("/")}>
           <img src={back} alt="이전페이지" />
