@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "./components/Header";
 import TabBar from "./components/TabBar";
 import FilterToggle, { type ToggleOption } from "./components/FilterToggle";
 import Nav from "../../components/Nav";
-import plusIcon from "../../assets/community/plus.svg";
-import xIcon from "../../assets/community/x.svg";
-import reviewIcon from "../../assets/community/review.svg";
+import WriteBtn from "./components/WriteBtn";
+import FloatingMenu from "./components/FloatingMenu";
 
 const OPTIONS: ToggleOption[] = [
   { key: "all", label: "전체" },
@@ -14,9 +14,12 @@ const OPTIONS: ToggleOption[] = [
 ];
 
 function CommMain() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"recommend" | "follow">("recommend");
   const [selected, setSelected] = useState<string[]>(["all", "chat", "review"]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const toggleMenu = () => setIsModalOpen((prev) => !prev);
 
   return (
     <>
@@ -39,20 +42,20 @@ function CommMain() {
       >
         <Nav scrollTargetSelector=".scroll-available" />
       </div>
-
-      {/* 배경 오버레이 */}
+      배경 오버레이
       {isModalOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40"
           onClick={() => setIsModalOpen(false)}
         />
       )}
-
+      <FloatingMenu isOpen={isModalOpen} />
+      <WriteBtn onClick={toggleMenu} isOpen={isModalOpen} />
       {/* 플로팅 버튼 그룹 */}
-      {isModalOpen && (
-        <>
-          {/* 사담 작성하기 */}
-          <div
+      {/* {isModalOpen && (
+        <> */}
+      {/* 사담 작성하기 */}
+      {/* <div
             className="flex items-center gap-2 z-50"
             style={{
               position: "fixed",
@@ -78,10 +81,9 @@ function CommMain() {
             >
               <img src={reviewIcon} alt="리뷰" className="w-6 h-6" />
             </button>
-          </div>
-
-          {/* 리뷰 작성하기 */}
-          <div
+          </div> */}
+      {/* 리뷰 작성하기 */}
+      {/* <div
             className="flex items-center gap-2 z-50"
             style={{
               position: "fixed",
@@ -103,14 +105,13 @@ function CommMain() {
             </span>
             <button
               className="flex items-center justify-center w-10 h-10 rounded-full shadow-lg bg-white hover:bg-gray-100 transition-colors flex-shrink-0"
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => navigate("/review-write")}
             >
               <img src={reviewIcon} alt="리뷰" className="w-6 h-6" />
             </button>
-          </div>
-
-          {/* X 버튼 */}
-          <button
+          </div> */}
+      {/* X 버튼 */}
+      {/* <button
             className="flex items-center justify-center w-10 h-10 rounded-full shadow-lg bg-white hover:bg-gray-100 transition-colors z-50"
             style={{
               position: "fixed",
@@ -122,10 +123,9 @@ function CommMain() {
             <img src={xIcon} alt="닫기" className="w-6 h-6" />
           </button>
         </>
-      )}
-
+      )} */}
       {/* + 버튼 */}
-      <button
+      {/* <button
         className="fixed flex items-center justify-center w-10 h-10 rounded-full shadow-lg"
         style={{
           backgroundColor: "#66021F",
@@ -135,7 +135,7 @@ function CommMain() {
         onClick={() => setIsModalOpen(true)}
       >
         <img src={plusIcon} alt="+" className="w-6 h-6" />
-      </button>
+      </button> */}
     </>
   );
 }
