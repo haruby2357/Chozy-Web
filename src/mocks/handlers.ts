@@ -498,6 +498,7 @@ export const handlers = [
 // 커뮤니티 게시글 목록 조회
 type FeedTab = "RECOMMEND" | "FOLLOWING";
 type FeedContentType = "ALL" | "POST" | "REVIEW";
+type Reaction = "LIKE" | "DISLIKE" | "NONE";
 
 type FeedUser = {
   profileImg: string;
@@ -510,29 +511,40 @@ type PostContent = {
   contentImgs: string[];
 };
 
-type ReviewContent = {
+type FeedCounts = {
+  comments: number;
+  likes: number;
+  dislikes: number;
+  quotes: number;
+};
+
+type FeedMyState = {
+  reaction: Reaction;
+  isbookmarked: boolean;
+  isreposted: boolean;
+};
+
+type ReviewContentBase = {
   vendor: string;
   title: string;
   rating: number;
   text: string;
-  contentImgs: string[];
-  quoteContent?: {
-    vendor: string;
-    title: string;
-    rating: number;
-    text: string;
-    contentImgs: string[];
-  };
+  contentImgs?: string[];
+};
+
+type QuotedReviewContent = ReviewContentBase & {
+  user: FeedUser;
+};
+
+type ReviewContent = ReviewContentBase & {
+  quoteContent?: QuotedReviewContent;
 };
 
 type FeedItemBase = {
   feedId: number;
-  users: FeedUser;
-  reviewCount: number;
-  likeCount: number;
-  dislikeCount: number;
-  quoteCount: number;
-  isBookmarked: boolean;
+  user: FeedUser;
+  counts: FeedCounts;
+  myState: FeedMyState;
 };
 
 type FeedItem =
@@ -556,25 +568,35 @@ const FEEDS: FeedItem[] = [
   {
     feedId: 1,
     type: "POST",
-    users: {
+    user: {
       profileImg: "https://cdn.example.com/users/12/profile.jpg",
       userName: "이수아",
       userId: "KUIT_PM",
     },
     content: {
       text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
-      contentImgs: ["/src/assets/goodsPage/examProd.svg"],
+      contentImgs: [
+        "/src/assets/goodsPage/examProd.svg",
+        "/src/assets/goodsPage/examProd.svg",
+        "/src/assets/goodsPage/examProd.svg",
+      ],
     },
-    reviewCount: 67,
-    likeCount: 67,
-    dislikeCount: 67,
-    quoteCount: 67,
-    isBookmarked: false,
+    counts: {
+      comments: 67,
+      likes: 67,
+      dislikes: 67,
+      quotes: 67,
+    },
+    myState: {
+      reaction: "LIKE", // LIKE | DISLIKE | NONE
+      isbookmarked: false,
+      isreposted: true,
+    },
   },
   {
     feedId: 2,
     type: "REVIEW",
-    users: {
+    user: {
       profileImg: "https://cdn.example.com/users/12/profile.jpg",
       userName: "이수아",
       userId: "KUIT_PM",
@@ -586,16 +608,22 @@ const FEEDS: FeedItem[] = [
       text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
       contentImgs: ["/src/assets/goodsPage/examProd.svg"],
     },
-    reviewCount: 67,
-    likeCount: 67,
-    dislikeCount: 67,
-    quoteCount: 67,
-    isBookmarked: true,
+    counts: {
+      comments: 67,
+      likes: 67,
+      dislikes: 67,
+      quotes: 67,
+    },
+    myState: {
+      reaction: "DISLIKE", // LIKE | DISLIKE | NONE
+      isbookmarked: true,
+      isreposted: true,
+    },
   },
   {
     feedId: 3,
     type: "REVIEW",
-    users: {
+    user: {
       profileImg: "https://cdn.example.com/users/12/profile.jpg",
       userName: "이수아",
       userId: "KUIT_PM",
@@ -603,22 +631,36 @@ const FEEDS: FeedItem[] = [
     content: {
       vendor: "알리",
       title: "Toocki 67W GaN USB C 충전기",
-      rating: 4.0,
+      rating: 4.5,
       text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
-      contentImgs: [""],
       quoteContent: {
+        user: {
+          profileImg: "https://cdn.example.com/users/12/profile.jpg",
+          userName: "이수아",
+          userId: "KUIT_PM",
+        },
         vendor: "알리",
         title: "Toocki 67W GaN USB C 충전기",
         rating: 4.0,
         text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
-        contentImgs: ["/src/assets/goodsPage/examProd.svg"],
+        contentImgs: [
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+        ],
       },
     },
-    reviewCount: 67,
-    likeCount: 67,
-    dislikeCount: 67,
-    quoteCount: 67,
-    isBookmarked: true,
+    counts: {
+      comments: 67,
+      likes: 67,
+      dislikes: 67,
+      quotes: 67,
+    },
+    myState: {
+      reaction: "NONE", // LIKE | DISLIKE | NONE
+      isbookmarked: true,
+      isreposted: true,
+    },
   },
 ];
 
