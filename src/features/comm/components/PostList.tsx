@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import StarRating from "./StarRating";
 import comment from "../../../assets/community/comment.svg";
 import quotation from "../../../assets/community/quotation.svg";
@@ -85,6 +86,7 @@ function hasQuoteContent(
 }
 
 export default function PostList({ tab, contentType }: PostProps) {
+  const navigate = useNavigate();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -130,7 +132,12 @@ export default function PostList({ tab, contentType }: PostProps) {
   return (
     <div className="flex flex-col gap-1">
       {filteredItems.map((item) => (
-        <div key={item.feedId} className="px-[8px] py-3 bg-white">
+        <div
+          key={item.feedId}
+          role="button"
+          onClick={() => navigate(`/community/feeds/${item.feedId}`)}
+          className="px-[8px] py-3 bg-white"
+        >
           {/* 프로필 */}
           <div className="flex flex-row gap-[8px] mb-[8px]">
             <img
@@ -247,6 +254,7 @@ export default function PostList({ tab, contentType }: PostProps) {
               {/* 댓글 */}
               <button
                 type="button"
+                onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
@@ -260,6 +268,7 @@ export default function PostList({ tab, contentType }: PostProps) {
               {/* 인용 */}
               <button
                 type="button"
+                onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
@@ -273,6 +282,7 @@ export default function PostList({ tab, contentType }: PostProps) {
               {/* 좋아요 */}
               <button
                 type="button"
+                onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
@@ -290,6 +300,7 @@ export default function PostList({ tab, contentType }: PostProps) {
               {/* 싫어요 */}
               <button
                 type="button"
+                onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
@@ -308,6 +319,7 @@ export default function PostList({ tab, contentType }: PostProps) {
             <div className="flex gap-[8px]">
               <button
                 type="button"
+                onClick={(e) => e.stopPropagation()}
                 className="w-6 h-6 flex items-center justify-center shrink-0"
               >
                 <img

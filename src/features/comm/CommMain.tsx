@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Header from "./components/Header";
 import TabBar from "./components/TabBar";
 import FilterToggle, { type ToggleOption } from "./components/FilterToggle";
@@ -18,7 +17,6 @@ type Tab = "RECOMMEND" | "FOLLOWING";
 type ContentType = "ALL" | "POST" | "REVIEW";
 
 function CommMain() {
-  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("RECOMMEND");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
