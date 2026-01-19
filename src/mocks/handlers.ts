@@ -651,3 +651,53 @@ handlers.push(
     return HttpResponse.json(ok(items));
   })
 );
+
+// 리뷰 작성
+// path: /community/reviews/create
+// method: POST
+handlers.push(
+  http.post("/community/reviews/create", async ({ request }) => {
+    try {
+      const requestBody = (await request.json()) as {
+        productUrl: string;
+        rating: number;
+        content: string;
+        img: Array<{ fileName: string; contentType: string }>;
+      };
+
+      const { productUrl, rating, content, img } = requestBody;
+
+      // 필수 필드 검증
+      if (!productUrl || rating === undefined || !content) {
+        return HttpResponse.json(
+          {
+            isSuccess: false,
+            code: 4000,
+            message: "요청에 실패했습니다.",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      // 성공 응답
+      const reviewId = Math.floor(Math.random() * 100000);
+      return HttpResponse.json(
+        ok({
+          reviewId,
+          message: "리뷰를 성공적으로 게시했어요.",
+        })
+      );
+    } catch (error) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 4000,
+          message: "요청에 실패했습니다.",
+          timestamp: new Date().toISOString(),
+        },
+        { status: 400 }
+      );
+    }
+  })
+);
