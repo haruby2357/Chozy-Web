@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import starIcon from "../../assets/community/star.svg";
-import backIcon from "../../assets/all/back.svg";
+// import backIcon from "../../assets/all/back.svg";
 
 export default function ReviewWrite() {
   const navigate = useNavigate();
@@ -21,9 +21,9 @@ export default function ReviewWrite() {
     }
   };
 
-  const handleRemoveImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-  };
+  // const handleRemoveImage = (index: number) => {
+  //   setImages(images.filter((_, i) => i !== index));
+  // };
 
   return (
     <div className="w-full min-h-screen bg-white pb-20">

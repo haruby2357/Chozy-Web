@@ -728,13 +728,13 @@ type FeedDetail =
       myState: FeedMyState;
     };
 
-type ApiResponse<T> = {
-  isSuccess: boolean;
-  code: number;
-  message: string;
-  timestamp: string;
-  result: T;
-};
+// type ApiResponse<T> = {
+//   isSuccess: boolean;
+//   code: number;
+//   message: string;
+//   timestamp: string;
+//   result: T;
+// };
 
 type CommentItem = {
   commentId: number;

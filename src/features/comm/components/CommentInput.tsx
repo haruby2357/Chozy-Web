@@ -39,7 +39,9 @@ export default function CommentInput({
             }}
           />
 
-          <img src={camera} alt="사진첨부" />
+          <button type="button">
+            <img src={camera} alt="사진첨부" />
+          </button>
         </div>
       </div>
     </div>
