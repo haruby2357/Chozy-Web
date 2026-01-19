@@ -3,6 +3,7 @@ import Home from "../features/goodsPage/Home";
 import SearchResult from "../features/goodsPage/SearchResult";
 import ReviewWrite from "../features/goodsPage/ReviewWrite";
 import CommMain from "../features/comm/CommMain";
+import PostDetail from "../features/comm/PostDetail";
 
 export default function AppRouter() {
   return (
@@ -12,6 +13,7 @@ export default function AppRouter() {
       <Route path="/" element={<Home />} />
       <Route path="/home/products" element={<SearchResult />} />
       <Route path="/community" element={<CommMain />} />
+      <Route path="/community/feeds/:feedId" element={<PostDetail />} />
       <Route path="/review-write" element={<ReviewWrite />} />
       <Route path="/heart" element={<Home />} />
       <Route path="/mypage" element={<Home />} />
