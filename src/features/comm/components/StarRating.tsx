@@ -2,6 +2,7 @@
 
 import starOnIcon from "../../../assets/community/star-on.svg";
 import starOffIcon from "../../../assets/community/star-off.svg";
+import starHalf from "../../../assets/community/star-half.svg";
 
 interface StarRatingProps {
   rating: number;

@@ -498,6 +498,7 @@ export const handlers = [
 // 커뮤니티 게시글 목록 조회
 type FeedTab = "RECOMMEND" | "FOLLOWING";
 type FeedContentType = "ALL" | "POST" | "REVIEW";
+type Reaction = "LIKE" | "DISLIKE" | "NONE";
 
 type FeedUser = {
   profileImg: string;
@@ -510,29 +511,40 @@ type PostContent = {
   contentImgs: string[];
 };
 
-type ReviewContent = {
+type FeedCounts = {
+  comments: number;
+  likes: number;
+  dislikes: number;
+  quotes: number;
+};
+
+type FeedMyState = {
+  reaction: Reaction;
+  isbookmarked: boolean;
+  isreposted: boolean;
+};
+
+type ReviewContentBase = {
   vendor: string;
   title: string;
   rating: number;
   text: string;
-  contentImgs: string[];
-  quoteContent?: {
-    vendor: string;
-    title: string;
-    rating: number;
-    text: string;
-    contentImgs: string[];
-  };
+  contentImgs?: string[];
+};
+
+type QuotedReviewContent = ReviewContentBase & {
+  user: FeedUser;
+};
+
+type ReviewContent = ReviewContentBase & {
+  quoteContent?: QuotedReviewContent;
 };
 
 type FeedItemBase = {
   feedId: number;
-  users: FeedUser;
-  reviewCount: number;
-  likeCount: number;
-  dislikeCount: number;
-  quoteCount: number;
-  isBookmarked: boolean;
+  user: FeedUser;
+  counts: FeedCounts;
+  myState: FeedMyState;
 };
 
 type FeedItem =
@@ -556,25 +568,35 @@ const FEEDS: FeedItem[] = [
   {
     feedId: 1,
     type: "POST",
-    users: {
+    user: {
       profileImg: "https://cdn.example.com/users/12/profile.jpg",
       userName: "이수아",
       userId: "KUIT_PM",
     },
     content: {
       text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
-      contentImgs: ["/src/assets/goodsPage/examProd.svg"],
+      contentImgs: [
+        "/src/assets/goodsPage/examProd.svg",
+        "/src/assets/goodsPage/examProd.svg",
+        "/src/assets/goodsPage/examProd.svg",
+      ],
     },
-    reviewCount: 67,
-    likeCount: 67,
-    dislikeCount: 67,
-    quoteCount: 67,
-    isBookmarked: false,
+    counts: {
+      comments: 67,
+      likes: 67,
+      dislikes: 67,
+      quotes: 67,
+    },
+    myState: {
+      reaction: "LIKE", // LIKE | DISLIKE | NONE
+      isbookmarked: false,
+      isreposted: true,
+    },
   },
   {
     feedId: 2,
     type: "REVIEW",
-    users: {
+    user: {
       profileImg: "https://cdn.example.com/users/12/profile.jpg",
       userName: "이수아",
       userId: "KUIT_PM",
@@ -583,19 +605,25 @@ const FEEDS: FeedItem[] = [
       vendor: "알리",
       title: "Toocki 67W GaN USB C 충전기",
       rating: 4.0,
-      text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
+      text: "노트북이랑 휴대폰을 같이 충전할 수 있는 충전기를 찾다가 구매했어요. 여러 기기를 동시에 연결해도 발열이 심하지 않고 충전 속도도 안정적인 편이라 만족하면서 쓰고 있습니다. 크기가 생각보다 작아서 가방에 넣고 다니기에도 부담 없고, 콘센트에 꽂았을 때도 흔들림이 크지 않아서 좋았어요. 케이블을 여러 개 챙기지 않아도 된다는 점이 특히 편리했고, 디자인도 과하지 않아서 어디에 두어도 잘 어울립니다. 아직 오래 사용한 건 아니지만 지금까지는 전반적으로 만족스러운 제품이에요. \n\n노트북이랑 휴대폰을 같이 충전할 수 있는 충전기를 찾다가 구매했어요. 여러 기기를 동시에 연결해도 발열이 심하지 않고 충전 속도도 안정적인 편이라 만족하면서 쓰고 있습니다. 크기가 생각보다 작아서 가방에 넣고 다니기에도 부담 없고, 콘센트에 꽂았을 때도 흔들림이 크지 않아서 좋았어요.",
       contentImgs: ["/src/assets/goodsPage/examProd.svg"],
     },
-    reviewCount: 67,
-    likeCount: 67,
-    dislikeCount: 67,
-    quoteCount: 67,
-    isBookmarked: true,
+    counts: {
+      comments: 67,
+      likes: 67,
+      dislikes: 67,
+      quotes: 67,
+    },
+    myState: {
+      reaction: "DISLIKE", // LIKE | DISLIKE | NONE
+      isbookmarked: true,
+      isreposted: true,
+    },
   },
   {
     feedId: 3,
     type: "REVIEW",
-    users: {
+    user: {
       profileImg: "https://cdn.example.com/users/12/profile.jpg",
       userName: "이수아",
       userId: "KUIT_PM",
@@ -603,22 +631,36 @@ const FEEDS: FeedItem[] = [
     content: {
       vendor: "알리",
       title: "Toocki 67W GaN USB C 충전기",
-      rating: 4.0,
+      rating: 4.5,
       text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
-      contentImgs: [""],
       quoteContent: {
+        user: {
+          profileImg: "https://cdn.example.com/users/12/profile.jpg",
+          userName: "이수아",
+          userId: "KUIT_PM",
+        },
         vendor: "알리",
         title: "Toocki 67W GaN USB C 충전기",
         rating: 4.0,
         text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
-        contentImgs: ["/src/assets/goodsPage/examProd.svg"],
+        contentImgs: [
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+        ],
       },
     },
-    reviewCount: 67,
-    likeCount: 67,
-    dislikeCount: 67,
-    quoteCount: 67,
-    isBookmarked: true,
+    counts: {
+      comments: 67,
+      likes: 67,
+      dislikes: 67,
+      quotes: 67,
+    },
+    myState: {
+      reaction: "NONE", // LIKE | DISLIKE | NONE
+      isbookmarked: true,
+      isreposted: true,
+    },
   },
 ];
 
@@ -649,6 +691,286 @@ handlers.push(
     }
 
     return HttpResponse.json(ok(items));
+  })
+);
+
+// 커뮤니티 게시글 상세보기
+type PostContentDetail = {
+  text: string;
+  contentImgs: string[];
+  hashTags: string[]; // "#a #b ..."
+};
+
+type ReviewContentDetail = {
+  vendor: string;
+  title: string;
+  rating: number;
+  text: string;
+  contentImgs: string[];
+  hashTags: string[];
+};
+
+type FeedDetail =
+  | {
+      feedId: number;
+      type: "POST";
+      user: FeedUser;
+      content: PostContentDetail;
+      counts: FeedCounts;
+      myState: FeedMyState;
+    }
+  | {
+      feedId: number;
+      type: "REVIEW";
+      user: FeedUser;
+      content: ReviewContentDetail;
+      counts: FeedCounts;
+      myState: FeedMyState;
+    };
+
+// type ApiResponse<T> = {
+//   isSuccess: boolean;
+//   code: number;
+//   message: string;
+//   timestamp: string;
+//   result: T;
+// };
+
+type CommentItem = {
+  commentId: number;
+  user: FeedUser;
+  quote: string; // "아이디" 같은 값
+  content: string;
+  counts: FeedCounts;
+  myState: FeedMyState;
+  createdAt: string;
+  // 대댓글
+  comment?: CommentItem[];
+};
+
+type FeedDetailResult = {
+  feed: FeedDetail;
+  comments: CommentItem[];
+};
+
+// key = feedId
+const FEED_DETAIL_MAP: Record<number, FeedDetailResult> = {
+  1: {
+    feed: {
+      feedId: 1,
+      type: "POST",
+      user: {
+        profileImg: "https://cdn.example.com/users/12/profile.jpg",
+        userName: "이수아",
+        userId: "KUIT_PM",
+      },
+      content: {
+        text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
+        contentImgs: [
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+        ],
+        hashTags: [
+          "#제품명이미지",
+          "#제품명이미지",
+          "#제품명이미지",
+          "#제품명이미지",
+        ],
+      },
+      counts: { comments: 67, likes: 67, dislikes: 67, quotes: 67 },
+      myState: { reaction: "LIKE", isbookmarked: true, isreposted: true },
+    },
+    comments: [],
+  },
+  2: {
+    feed: {
+      feedId: 2,
+      type: "REVIEW",
+      user: {
+        profileImg: "https://cdn.example.com/users/12/profile.jpg",
+        userName: "이수아",
+        userId: "KUIT_PM",
+      },
+      content: {
+        vendor: "알리",
+        title: "Toocki 67W GaN USB C 충전기",
+        rating: 4.0,
+        text: "노트북이랑 휴대폰을 같이 충전할 수 있는 충전기를 찾다가 구매했어요. 여러 기기를 동시에 연결해도 발열이 심하지 않고 충전 속도도 안정적인 편이라 만족하면서 쓰고 있습니다. 크기가 생각보다 작아서 가방에 넣고 다니기에도 부담 없고, 콘센트에 꽂았을 때도 흔들림이 크지 않아서 좋았어요. 케이블을 여러 개 챙기지 않아도 된다는 점이 특히 편리했고, 디자인도 과하지 않아서 어디에 두어도 잘 어울립니다. 아직 오래 사용한 건 아니지만 지금까지는 전반적으로 만족스러운 제품이에요. \n\n노트북이랑 휴대폰을 같이 충전할 수 있는 충전기를 찾다가 구매했어요. 여러 기기를 동시에 연결해도 발열이 심하지 않고 충전 속도도 안정적인 편이라 만족하면서 쓰고 있습니다. 크기가 생각보다 작아서 가방에 넣고 다니기에도 부담 없고, 콘센트에 꽂았을 때도 흔들림이 크지 않아서 좋았어요.",
+        contentImgs: [
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+          "/src/assets/goodsPage/examProd.svg",
+        ],
+        hashTags: [
+          "#제품명이미지",
+          "#제품명이미지",
+          "#제품명이미지",
+          "#제품명이미지",
+        ],
+      },
+      counts: { comments: 67, likes: 67, dislikes: 67, quotes: 67 },
+      myState: { reaction: "LIKE", isbookmarked: true, isreposted: true },
+    },
+    comments: [
+      {
+        commentId: 1,
+        user: {
+          profileImg: "https://cdn.example.com/users/12/profile.jpg",
+          userName: "이수아",
+          userId: "KUIT_PM",
+        },
+        quote: "아이디",
+        content: "감사합니다~~",
+        counts: { comments: 0, likes: 1, dislikes: 0, quotes: 0 },
+        myState: { reaction: "LIKE", isbookmarked: false, isreposted: false },
+        createdAt: "2025-02-19T23:35:34.861172",
+      },
+      {
+        commentId: 2,
+        user: {
+          profileImg: "/src/assets/goodsPage/examProd.svg",
+          userName: "이수아",
+          userId: "KUIT_PM",
+        },
+        quote: "아이디",
+        content: "감사합니다~~",
+        counts: { comments: 2, likes: 0, dislikes: 0, quotes: 0 },
+        myState: { reaction: "NONE", isbookmarked: false, isreposted: false },
+        createdAt: "2026-01-13T23:35:34.861172",
+        comment: [
+          {
+            commentId: 3,
+            user: {
+              profileImg: "/src/assets/goodsPage/examProd.svg",
+              userName: "이수아",
+              userId: "KUIT_PM",
+            },
+            quote: "아이디",
+            content: "대댓글 1",
+            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
+            myState: {
+              reaction: "NONE",
+              isbookmarked: false,
+              isreposted: false,
+            },
+            createdAt: "2026-01-16T23:35:34.861172",
+          },
+          {
+            commentId: 4,
+            user: {
+              profileImg: "/src/assets/goodsPage/examProd.svg",
+              userName: "이수아",
+              userId: "KUIT_PM",
+            },
+            quote: "아이디",
+            content: "대댓글 2",
+            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
+            myState: {
+              reaction: "NONE",
+              isbookmarked: false,
+              isreposted: false,
+            },
+            createdAt: "2026-01-16T23:35:34.861172",
+          },
+          {
+            commentId: 5,
+            user: {
+              profileImg: "/src/assets/goodsPage/examProd.svg",
+              userName: "이수아",
+              userId: "KUIT_PM",
+            },
+            quote: "아이디",
+            content: "대댓글 3",
+            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
+            myState: {
+              reaction: "NONE",
+              isbookmarked: false,
+              isreposted: false,
+            },
+            createdAt: "2026-01-16T23:35:34.861172",
+          },
+          {
+            commentId: 6,
+            user: {
+              profileImg: "/src/assets/goodsPage/examProd.svg",
+              userName: "이수아",
+              userId: "KUIT_PM",
+            },
+            quote: "아이디",
+            content: "대댓글 4",
+            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
+            myState: {
+              reaction: "NONE",
+              isbookmarked: false,
+              isreposted: false,
+            },
+            createdAt: "2026-01-16T23:35:34.861172",
+          },
+        ],
+      },
+    ],
+  },
+};
+
+handlers.push(
+  http.get("/community/feeds/:feedId/detail", ({ params }) => {
+    const id = Number(params.feedId);
+    const data = FEED_DETAIL_MAP[id];
+
+    if (!data) {
+      return HttpResponse.json(
+        {
+          isSuccess: true,
+          code: 4040,
+          message: "존재하지 않는 피드입니다.",
+          timestamp: new Date().toISOString(),
+          result: null,
+        },
+        { status: 404 }
+      );
+    }
+
+    return HttpResponse.json(ok(data), { status: 200 });
+  })
+);
+
+// 팔로우 요청/취소
+// src/mocks/handlers.ts
+
+type FollowStatus = "FOLLOWING" | "NONE";
+
+const followMap = new Map<string, FollowStatus>();
+// key: targetUserId, value: status
+
+handlers.push(
+  http.post("/users/me/followings/:targetUserId", ({ params }) => {
+    const targetUserId = String(params.targetUserId);
+    followMap.set(targetUserId, "FOLLOWING");
+
+    return HttpResponse.json(
+      {
+        targetUserId,
+        followStatus: "FOLLOWING",
+        requestedAt: new Date().toISOString(),
+      },
+      { status: 200 }
+    );
+  }),
+
+  http.delete("/users/me/followings/:targetUserId", ({ params }) => {
+    const targetUserId = String(params.targetUserId);
+    followMap.set(targetUserId, "NONE");
+
+    return HttpResponse.json(
+      {
+        targetUserId,
+        followStatus: "NONE",
+        unfollowedAt: new Date().toISOString(),
+        processedAt: new Date().toISOString(),
+      },
+      { status: 200 }
+    );
   })
 );
 

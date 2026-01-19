@@ -53,9 +53,9 @@ export default function FilterToggle({
     if (allOption) {
       nextSet.delete(allKey);
 
-      const nextAllChildrenOn = childKeys.every((k) =>
-        k === key ? nextSet.has(k) : nextSet.has(k)
-      );
+      // const nextAllChildrenOn = childKeys.every((k) =>
+      //   k === key ? nextSet.has(k) : nextSet.has(k)
+      // );
 
       const allChildrenOn = childKeys.every((k) => nextSet.has(k));
       if (allChildrenOn) nextSet.add(allKey);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import StarRating from "./StarRating";
 import comment from "../../../assets/community/comment.svg";
 import quotation from "../../../assets/community/quotation.svg";
@@ -12,6 +13,7 @@ import repost from "../../../assets/community/repost.svg";
 
 type Tab = "RECOMMEND" | "FOLLOWING";
 type ContentType = "ALL" | "POST" | "REVIEW";
+type Reaction = "LIKE" | "DISLIKE" | "NONE";
 
 type PostProps = {
   tab: Tab;
@@ -26,46 +28,65 @@ type ApiResponse<T> = {
   result: T;
 };
 
+type FeedUser = {
+  profileImg: string;
+  userName: string;
+  userId: string;
+};
+
+type FeedCounts = {
+  comments: number;
+  likes: number;
+  dislikes: number;
+  quotes: number;
+};
+
+type FeedMyState = {
+  reaction: Reaction;
+  isbookmarked: boolean;
+  isreposted: boolean;
+};
+
 type PostContent = {
   text: string;
   contentImgs: string[];
-  quoteContent?: QuoteContent;
 };
 
-type ReviewContent = {
+type ReviewContentBase = {
   vendor: string;
   title: string;
   rating: number;
   text: string;
   contentImgs: string[];
-  quoteContent?: QuoteContent;
 };
 
-type QuoteContent =
-  | Omit<PostContent, "quoteContent">
-  | Omit<ReviewContent, "quoteContent">;
+type QuotedReviewContent = ReviewContentBase & {
+  user: FeedUser;
+};
 
-type FeedBase = {
+type ReviewContent = ReviewContentBase & {
+  quoteContent?: QuotedReviewContent;
+};
+
+type FeedItemBase = {
   feedId: number;
-  users: { profileImg: string; userName: string; userId: string };
-  reviewCount: number;
-  likeCount: number;
-  dislikeCount: number;
-  quoteCount: number;
-  isBookmarked: boolean;
+  user: FeedUser;
+  counts: FeedCounts;
+  myState: FeedMyState;
 };
 
 export type FeedItem =
-  | (FeedBase & { type: "POST"; content: PostContent })
-  | (FeedBase & { type: "REVIEW"; content: ReviewContent });
+  | (FeedItemBase & { type: "POST"; content: PostContent })
+  | (FeedItemBase & { type: "REVIEW"; content: ReviewContent });
 
-function isReviewContent(
-  c: QuoteContent
-): c is Omit<ReviewContent, "quoteContent"> {
-  return "vendor" in c && "title" in c && "rating" in c;
+function hasQuoteContent(
+  c: PostContent | ReviewContent
+): c is ReviewContent & { quoteContent: QuotedReviewContent } {
+  return "quoteContent" in c && !!(c as any).quoteContent;
 }
 
 export default function PostList({ tab, contentType }: PostProps) {
+  const navigate = useNavigate();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -111,20 +132,25 @@ export default function PostList({ tab, contentType }: PostProps) {
   return (
     <div className="flex flex-col gap-1">
       {filteredItems.map((item) => (
-        <div key={item.feedId} className="px-[8px] py-3 bg-white">
+        <div
+          key={item.feedId}
+          role="button"
+          onClick={() => navigate(`/community/feeds/${item.feedId}`)}
+          className="px-[8px] py-3 bg-white"
+        >
           {/* 프로필 */}
           <div className="flex flex-row gap-[8px] mb-[8px]">
             <img
-              src={item.users.profileImg}
+              src={item.user.profileImg}
               alt="프로필"
               className="w-10 h-10 rounded-[40px] border border-[#F9F9F9]"
             />
             <div className="flex flex-col gap-[2px]">
               <span className="text-[#191919] text-[14px] font-medium">
-                {item.users.userName}
+                {item.user.userName}
               </span>
               <span className="text-[#B5B5B5] text-[12px]">
-                @{item.users.userId}
+                @{item.user.userId}
               </span>
             </div>
           </div>
@@ -151,79 +177,73 @@ export default function PostList({ tab, contentType }: PostProps) {
 
           {/* 본문 */}
           <div className="flex flex-col gap-3">
-            <div className="text-[14px] line-clamp-4 whitespace-pre-line">
+            <div className="text-[14px] line-clamp-3 whitespace-pre-line">
               {item.content.text}
             </div>
-            <div>
-              {item.content.contentImgs.map((imgString, index) => (
-                <img key={index} src={imgString} alt="게시글이미지" />
-              ))}
-            </div>
+            {!!(item.content.contentImgs ?? []).filter(Boolean).length && (
+              <div className="mt-3 flex gap-[2px] overflow-x-auto scrollbar-hide">
+                {(item.content.contentImgs ?? [])
+                  .filter(Boolean)
+                  .map((imgString, index) => (
+                    <img key={index} src={imgString} alt="게시글이미지" />
+                  ))}
+              </div>
+            )}
           </div>
 
           {/* 인용 글일 결우 */}
-          {item.content.quoteContent && (
+          {hasQuoteContent(item.content) && (
             <div className="mt-5 rounded-[4px] border border-[#DADADA] px-[8px] py-3">
-              {isReviewContent(item.content.quoteContent) ? (
-                <>
-                  <div className="flex flex-row gap-1 mb-1">
-                    <span className="text-[#800025] text-[16px] font-semibold">
-                      {item.content.quoteContent.vendor}
-                    </span>
-                    <span className="text-[#191919] text-[16px] font-medium">
-                      {item.content.quoteContent.title}
-                    </span>
-                  </div>
+              <div className="flex flex-row gap-[8px] mb-[8px]">
+                <img
+                  src={item.content.quoteContent.user.profileImg}
+                  alt="인용 프로필"
+                  className="w-8 h-8 rounded-full border border-[#F9F9F9]"
+                />
+                <div className="flex flex-col gap-[2px]">
+                  <span className="text-[#191919] text-[13px] font-medium">
+                    {item.content.quoteContent.user.userName}
+                  </span>
+                  <span className="text-[#B5B5B5] text-[11px]">
+                    @{item.content.quoteContent.user.userId}
+                  </span>
+                </div>
+              </div>
 
-                  <div className="flex flex-row gap-1">
-                    <StarRating rating={item.content.quoteContent.rating} />
-                    <span className="text-[#B5B5B5] text-[13px]">
-                      {item.content.quoteContent.rating.toFixed(1)}
-                    </span>
-                  </div>
+              <div className="flex flex-row gap-1 mb-1">
+                <span className="text-[#800025] text-[16px] font-semibold">
+                  {item.content.quoteContent.vendor}
+                </span>
+                <span className="text-[#191919] text-[16px] font-medium">
+                  {item.content.quoteContent.title}
+                </span>
+              </div>
 
-                  <p className="text-[14px] line-clamp-4 whitespace-pre-line">
-                    {item.content.quoteContent.text}
-                  </p>
+              <div className="flex flex-row gap-1">
+                <StarRating rating={item.content.quoteContent.rating} />
+                <span className="text-[#B5B5B5] text-[13px]">
+                  {item.content.quoteContent.rating.toFixed(1)}
+                </span>
+              </div>
 
-                  {!!item.content.quoteContent.contentImgs?.filter(Boolean)
-                    .length && (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {item.content.quoteContent.contentImgs
-                        .filter(Boolean)
-                        .map((src, idx) => (
-                          <img
-                            key={idx}
-                            src={src}
-                            alt="인용 이미지"
-                            className="w-full aspect-square rounded-[4px] object-cover"
-                          />
-                        ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <p className="text-[14px] line-clamp-4 whitespace-pre-line">
-                    {item.content.quoteContent.text}
-                  </p>
+              <p className="text-[14px] line-clamp-4 whitespace-pre-line mt-2">
+                {item.content.quoteContent.text}
+              </p>
 
-                  {!!item.content.quoteContent.contentImgs?.filter(Boolean)
-                    .length && (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {item.content.quoteContent.contentImgs
-                        .filter(Boolean)
-                        .map((src, idx) => (
-                          <img
-                            key={idx}
-                            src={src}
-                            alt="인용 이미지"
-                            className="w-full aspect-square rounded-[4px] object-cover"
-                          />
-                        ))}
-                    </div>
-                  )}
-                </>
+              {!!item.content.quoteContent.contentImgs?.filter(Boolean)
+                .length && (
+                <div className="mt-3 flex gap-[2px] overflow-x-auto scrollbar-hide">
+                  {item.content.quoteContent.contentImgs
+                    .filter(Boolean)
+                    .map((src, idx) => (
+                      <img
+                        key={idx}
+                        src={src}
+                        alt="인용 이미지"
+                        className="w-full aspect-square rounded-[4px] object-cover"
+                      />
+                    ))}
+                </div>
               )}
             </div>
           )}
@@ -232,54 +252,82 @@ export default function PostList({ tab, contentType }: PostProps) {
           <div className="pl-1 flex items-center justify-between mt-5">
             <div className="flex gap-3">
               {/* 댓글 */}
-              <span className="flex items-center gap-[3px] leading-none">
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-[3px] leading-none"
+              >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
                   <img src={comment} alt="댓글수" className="w-6 h-6 block" />
                 </span>
                 <span className="text-[13px] leading-none">
-                  {item.reviewCount}
+                  {item.counts.comments}
                 </span>
-              </span>
+              </button>
 
               {/* 인용 */}
-              <span className="flex items-center gap-[3px] leading-none">
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-[3px] leading-none"
+              >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
                   <img src={quotation} alt="인용수" className="w-6 h-6 block" />
                 </span>
                 <span className="text-[13px] leading-none">
-                  {item.quoteCount}
+                  {item.counts.quotes}
                 </span>
-              </span>
+              </button>
 
               {/* 좋아요 */}
-              <span className="flex items-center gap-[3px] leading-none">
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-[3px] leading-none"
+              >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
-                  <img src={goodOff} alt="좋아요수" className="w-6 h-6 block" />
+                  <img
+                    src={item.myState.reaction === "LIKE" ? goodOn : goodOff}
+                    alt="좋아요수"
+                    className="w-6 h-6 block"
+                  />
                 </span>
                 <span className="text-[13px] leading-none">
-                  {item.likeCount}
+                  {item.counts.likes}
                 </span>
-              </span>
+              </button>
 
               {/* 싫어요 */}
-              <span className="flex items-center gap-[3px] leading-none">
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-[3px] leading-none"
+              >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
-                  <img src={badOff} alt="싫어요수" className="w-6 h-6 block" />
+                  <img
+                    src={item.myState.reaction === "DISLIKE" ? badOn : badOff}
+                    alt="싫어요수"
+                    className="w-6 h-6 block"
+                  />
                 </span>
                 <span className="text-[13px] leading-none">
-                  {item.dislikeCount}
+                  {item.counts.dislikes}
                 </span>
-              </span>
+              </button>
             </div>
 
             <div className="flex gap-[8px]">
-              <span className="w-6 h-6 flex items-center justify-center shrink-0">
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="w-6 h-6 flex items-center justify-center shrink-0"
+              >
                 <img
-                  src={item.isBookmarked ? bookmarkOn : bookmarkOff}
+                  src={item.myState.isbookmarked ? bookmarkOn : bookmarkOff}
                   alt="북마크"
                   className="w-6 h-6 block"
                 />
-              </span>
+              </button>
               <span className="w-6 h-6 flex items-center justify-center shrink-0">
                 <img src={repost} alt="재게시" className="w-6 h-6 block" />
               </span>
