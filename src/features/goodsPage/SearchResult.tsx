@@ -113,7 +113,7 @@ export default function SearchResult() {
 
   return (
     <div className="h-full bg-white">
-      <SearchBar2 />
+      <SearchBar2 backBehavior="BACK" focusNavigateTo="/home/search" />
 
       <div className="h-full overflow-y-auto scrollbar-hide pt-[68px]">
         {/* DEV ONLY: 필터 바텀시트 테스트 진입 버튼 */}

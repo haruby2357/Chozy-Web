@@ -306,68 +306,6 @@ const PRODUCTS: ProductInternal[] = [
   },
 ];
 
-const RECENT_VIEWED: Product[] = PRODUCTS.slice(0, 10).map(omitCategory);
-
-const RECENT_KEYWORDS = [
-  { keywordId: 101, keyword: "가을 상의" },
-  { keywordId: 102, keyword: "크리스마스 니트" },
-  { keywordId: 103, keyword: "폰케이스" },
-  { keywordId: 104, keyword: "자켓" },
-  { keywordId: 105, keyword: "니트 가디건" },
-  { keywordId: 106, keyword: "방한용품" },
-  { keywordId: 107, keyword: "겨울 장갑" },
-  { keywordId: 108, keyword: "겨울목도리" },
-  { keywordId: 109, keyword: "니트 원피스" },
-  { keywordId: 110, keyword: "레이어드티" },
-  { keywordId: 111, keyword: "니아신아마이드" },
-  { keywordId: 112, keyword: "향수" },
-  { keywordId: 113, keyword: "무선 이어폰" },
-  { keywordId: 114, keyword: "담요" },
-  { keywordId: 115, keyword: "강아지 옷" },
-];
-
-const POPULAR_KEYWORDS = [
-  { keywordId: 201, keyword: "가을상의", previousRank: 3, currentRank: 1 },
-  { keywordId: 202, keyword: "겨울목도리", previousRank: 2, currentRank: 2 },
-  { keywordId: 203, keyword: "겨울 장갑", previousRank: 1, currentRank: 3 },
-  { keywordId: 204, keyword: "방한용품", previousRank: 4, currentRank: 4 },
-  { keywordId: 205, keyword: "겨울원피스", previousRank: 6, currentRank: 5 },
-  { keywordId: 206, keyword: "레이어드티", previousRank: 5, currentRank: 6 },
-  { keywordId: 207, keyword: "앙고라가디건", previousRank: 10, currentRank: 7 },
-  { keywordId: 208, keyword: "트위드자켓", previousRank: 8, currentRank: 8 },
-  { keywordId: 209, keyword: "니트", previousRank: 9, currentRank: 9 },
-  { keywordId: 210, keyword: "폰케이스", previousRank: 7, currentRank: 10 },
-  { keywordId: 211, keyword: "니트 가디건", previousRank: 14, currentRank: 11 },
-  { keywordId: 212, keyword: "니트 원피스", previousRank: 12, currentRank: 12 },
-  {
-    keywordId: 213,
-    keyword: "니아신아마이드",
-    previousRank: 15,
-    currentRank: 13,
-  },
-  { keywordId: 214, keyword: "무선 이어폰", previousRank: 11, currentRank: 14 },
-  { keywordId: 215, keyword: "향수", previousRank: 13, currentRank: 15 },
-];
-
-const RECOMMEND_KEYWORDS = [
-  { keywordId: 301, keyword: "니트" },
-  { keywordId: 302, keyword: "니트 가디건" },
-  { keywordId: 303, keyword: "니트 원피스" },
-  { keywordId: 304, keyword: "니트 조끼" },
-  { keywordId: 305, keyword: "니트 베스트" },
-  { keywordId: 306, keyword: "니트 머플러" },
-  { keywordId: 307, keyword: "니트 스커트" },
-  { keywordId: 308, keyword: "니트 팬츠" },
-  { keywordId: 309, keyword: "니치 향수" },
-  { keywordId: 310, keyword: "니아신아마이드" },
-  { keywordId: 311, keyword: "미니 니트백" },
-  { keywordId: 312, keyword: "가을 상의" },
-  { keywordId: 313, keyword: "트위드자켓" },
-  { keywordId: 314, keyword: "겨울목도리" },
-  { keywordId: 315, keyword: "무선 이어폰" },
-  { keywordId: 316, keyword: "방한용품" },
-];
-
 export let handlers = [
   // GET 요청: 데이터 가져오기 (ex. 사용자 프로필)
   http.get("https://api.example.com/user", () => {
@@ -460,39 +398,6 @@ export let handlers = [
     return HttpResponse.json(ok(result));
   }),
 
-  // 최근 본 상품 조회
-  // response: 10개
-  http.get("/home/products/recent", () => {
-    return HttpResponse.json(ok(RECENT_VIEWED));
-  }),
-
-  // 최근 검색어 조회
-  // response: 최대 10개
-  http.get("/home/search/recent", () => {
-    return HttpResponse.json(ok(RECENT_KEYWORDS.slice(0, 10)));
-  }),
-
-  // 인기 검색어 조회
-  // response: 최대 10개
-  http.get("/home/search/popular", () => {
-    return HttpResponse.json(ok(POPULAR_KEYWORDS.slice(0, 10)));
-  }),
-
-  // 검색어 자동 완성
-  // query: keyword
-  // response: 최대 10개
-  http.get("/home/search/recommed", ({ request }) => {
-    const url = new URL(request.url);
-    const keyword = (url.searchParams.get("keyword") ?? "")
-      .replace(/^"|"$/g, "")
-      .trim();
-
-    const filtered = keyword
-      ? RECOMMEND_KEYWORDS.filter((k) => k.keyword.includes(keyword))
-      : RECOMMEND_KEYWORDS;
-
-    return HttpResponse.json(ok(filtered.slice(0, 10)));
-  }),
 ];
 
 // 커뮤니티 게시글 목록 조회

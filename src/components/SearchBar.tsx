@@ -1,11 +1,12 @@
 // 메인화면 검색바
-// 추후에 사용자가 엔터 누를 경우 서버로 전송 코드 추가 필요
-// 상품 검색 화면으로 무슨 타이밍에 넘어가는지 확인 필요
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import search from "../assets/all/search.svg";
 import cancel from "../assets/all/cancel.svg";
 
 export default function SearchBar() {
+  const navigate = useNavigate();
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useState("");
   const isActive = focused || value.length > 0;
@@ -26,7 +27,10 @@ export default function SearchBar() {
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true); //검색 전담 화면 이동
+          navigate("/home/search");
+        }}
         onBlur={() => setFocused(false)}
         placeholder="검색어를 입력하세요."
         className="flex-1 outline-none bg-transparent text-[16px]

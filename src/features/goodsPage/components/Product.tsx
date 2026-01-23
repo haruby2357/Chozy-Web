@@ -2,7 +2,10 @@ import heartOn from "../../../assets/goodsPage/heartOn.svg";
 import heartOff from "../../../assets/goodsPage/heartOff.svg";
 import star from "../../../assets/goodsPage/star.svg";
 
+type ProductSize = "md" | "sm";
+
 type ProductProps = {
+  size?: ProductSize;
   productId: number;
   name: string;
   originalPrice: number;
@@ -19,7 +22,16 @@ type ProductProps = {
 const calcFinalPrice = (originalPrice: number, discountRate: number) =>
   Math.round((originalPrice * (100 - discountRate)) / 100);
 
+const SIZE_MAP: Record<ProductSize, { w: string; h: string; nameW: string }> = {
+  // 기본 상품 카드
+  md: { w: "w-[177px]", h: "h-[177px]", nameW: "w-[177px]" },
+  // 최근 본 상품용
+  sm: { w: "w-[140px]", h: "h-[140px]", nameW: "w-[140px]" },
+};
+
+
 export default function Product({
+  size = "md",
   productId,
   name,
   originalPrice,
@@ -45,16 +57,19 @@ export default function Product({
     reviewCount,
     deliveryFee,
   });
+
+  const s = SIZE_MAP[size];
+
   return (
-    <div className="flex flex-col gap-2 mx-auto">
+    <div className={`flex flex-col gap-2 ${s.w}`}>
       {/* 상품사진 */}
       <div className="relative w-full flex justify-center">
-        <div className="relative w-[177px] h-[177px]">
+        <div className={`relative w-full ${s.h}`}>
           <img
             src={imageUrl}
             alt={name}
             onClick={() => window.open(productUrl, "_blank")}
-            className="cursor-pointer"
+            className="cursor-pointer w-full h-full object-cover rounded-[8px]"
           />
 
           <button
@@ -71,7 +86,7 @@ export default function Product({
       {/* 상품명 */}
       <p
         onClick={() => window.open(productUrl, "_blank")}
-        className="w-[177px] text-[14px] font-semibold line-clamp-1 cursor-pointer"
+        className="w-full text-[14px] font-semibold line-clamp-1 cursor-pointer"
       >
         {name}
       </p>

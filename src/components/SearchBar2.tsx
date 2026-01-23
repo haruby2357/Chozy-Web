@@ -1,5 +1,5 @@
 // 검색 결과 화면 및 검색화면 검색바 헤더
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import back from "../assets/all/back.svg";
 import cancel from "../assets/all/cancel.svg";
@@ -30,53 +30,113 @@ const CATEGORY_LABEL_MAP: Record<Category, string> = {
 const isCategory = (v: string | null): v is Category =>
   v !== null && v in CATEGORY_LABEL_MAP;
 
-export default function SearchBar2() {
+type SearchBar2Props = {
+  autoFocus?: boolean;
+  value?: string;
+  onChange?: (v: string) => void;
+  onSubmitQuery?: (q: string) => void;
+  focusNavigateTo?: string;
+  backBehavior?: "HOME" | "BACK";
+  onCompositionChange?: (isComposing: boolean) => void; // 한글 조합 상태 전달
+};
+
+export default function SearchBar2({
+  autoFocus,
+  value: controlledValue,
+  onChange,
+  onSubmitQuery,
+  focusNavigateTo,
+  backBehavior = "HOME",
+  onCompositionChange,
+}: SearchBar2Props) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const categoryParam = searchParams.get("category");
   const searchParam = searchParams.get("search") ?? "";
 
   const category = useMemo(
     () => (isCategory(categoryParam) ? categoryParam : null),
-    [categoryParam]
+    [categoryParam],
   );
 
   const isCategoryMode = category !== null;
-
   const initialValue = isCategoryMode
     ? CATEGORY_LABEL_MAP[category]
     : searchParam;
 
+  const isControlled =
+    controlledValue !== undefined && typeof onChange === "function";
+
   const [focused, setFocused] = useState(false);
-  const [value, setValue] = useState("");
   const isActive = focused;
 
+  const [uncontrolledValue, setUncontrolledValue] = useState<string>("");
+
   useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
+    if (isControlled) return;
+
+    // ESLint(react-hooks/set-state-in-effect) 회피용 타임아웃
+    const id = window.setTimeout(() => {
+      setUncontrolledValue(initialValue);
+    }, 0);
+
+    return () => window.clearTimeout(id);
+  }, [initialValue, isControlled]);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    queueMicrotask(() => inputRef.current?.focus());
+  }, [autoFocus]);
+
+  const value = isControlled ? controlledValue : uncontrolledValue;
 
   // 카테고리일 때만 # 붙여서 보여주기
   const displayValue =
     isCategoryMode && !focused && value ? `#${value}` : value;
+
+  const setValue = (next: string) => {
+    if (isControlled) onChange?.(next);
+    else setUncontrolledValue(next);
+  };
 
   const handleChange = (next: string) => {
     const cleaned = next.startsWith("#") ? next.slice(1) : next;
     setValue(cleaned);
   };
 
+  const clearValue = () => setValue("");
+
   const handleSubmit = () => {
-    const q = value.trim();
+    const q = (value ?? "").trim();
     if (!q) return;
 
-    // 사용자가 직접 입력하면 "검색 모드"로 전환
-    navigate(`/home/products?search=${encodeURIComponent(q)}`);
+    if (onSubmitQuery) {
+      onSubmitQuery(q);
+      return;
+    }
+
+    // 기본: 검색 결과로 이동
+    navigate(`/home/products?search=${encodeURIComponent(q)}&source=manual`);
   };
 
   return (
     <header className="absolute top-0 left-1/2 -translate-x-1/2 z-50 w-[390px] bg-white pt-[9px] px-4 pb-3">
       <div className="flex flex-row gap-3 items-center justify-center">
-        <button type="button" className="w-6 h-6" onClick={() => navigate("/")}>
+        <button
+          type="button"
+          className="w-6 h-6"
+          onClick={() => {
+            // backBehavior="BACK"이면 직전으로, 히스토리 없으면 홈 fallback
+            if (backBehavior === "BACK") {
+              if (window.history.length > 1) navigate(-1);
+              else navigate("/");
+              return;
+            }
+            // 기본은 홈으로 이동
+            navigate("/");
+          }}
+        >
           <img src={back} alt="이전페이지" />
         </button>
 
@@ -87,11 +147,21 @@ export default function SearchBar2() {
           `}
         >
           <input
+            ref={inputRef}
             type="text"
             value={displayValue}
             onChange={(e) => handleChange(e.target.value)}
-            onFocus={() => setFocused(true)}
+            onFocus={() => {
+              setFocused(true);
+              // 검색 결과에서 검색창 클릭 시 검색 전담 화면으로 재진입
+              if (focusNavigateTo) navigate(focusNavigateTo);
+            }}
             onBlur={() => setFocused(false)}
+            onCompositionStart={() => onCompositionChange?.(true)}
+            onCompositionEnd={() => {
+              // 한글 조합 상태 동기화 목적의 지연
+              queueMicrotask(() => onCompositionChange?.(false));
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSubmit();
             }}
@@ -104,11 +174,11 @@ export default function SearchBar2() {
             maxLength={MAX_LEN}
           />
 
-          {isActive && value.length > 0 && (
+          {isActive && (value ?? "").length > 0 && (
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setValue("")}
+              onClick={clearValue}
             >
               <img src={cancel} alt="취소" />
             </button>
