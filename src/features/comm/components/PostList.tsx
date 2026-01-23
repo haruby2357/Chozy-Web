@@ -75,12 +75,23 @@ type FeedItemBase = {
   myState: FeedMyState;
 };
 
+type LikeToggleResult = {
+  feedId: number;
+  reaction: Reaction;
+  counts: { likes: number; dislikes: number };
+};
+
+type BookmarkToggleResult = {
+  feedId: number;
+  isBookmarked: boolean;
+};
+
 export type FeedItem =
   | (FeedItemBase & { type: "POST"; content: PostContent })
   | (FeedItemBase & { type: "REVIEW"; content: ReviewContent });
 
 function hasQuoteContent(
-  c: PostContent | ReviewContent
+  c: PostContent | ReviewContent,
 ): c is ReviewContent & { quoteContent: QuotedReviewContent } {
   return "quoteContent" in c && !!(c as any).quoteContent;
 }
@@ -95,7 +106,7 @@ export default function PostList({ tab, contentType }: PostProps) {
       try {
         setLoading(true);
         const res = await fetch(
-          `/community/feeds?tab=${tab}&contentType=${contentType}`
+          `/community/feeds?tab=${tab}&contentType=${contentType}`,
         );
         const data: ApiResponse<FeedItem[]> = await res.json();
 
@@ -108,6 +119,76 @@ export default function PostList({ tab, contentType }: PostProps) {
 
     run();
   }, [tab, contentType]);
+
+  // 게시글 좋아요/싫어요 토글
+  const handleToggleReaction = async (feedId: number, like: boolean) => {
+    try {
+      const res = await fetch(`/community/feeds/${feedId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ like }),
+      });
+      if (!res.ok) throw new Error("toggle reaction failed");
+
+      const data: ApiResponse<LikeToggleResult> = await res.json();
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setItems((prev) =>
+        prev.map((it) =>
+          it.feedId !== feedId
+            ? it
+            : {
+                ...it,
+                counts: {
+                  ...it.counts,
+                  likes: data.result.counts.likes,
+                  dislikes: data.result.counts.dislikes,
+                },
+                myState: {
+                  ...it.myState,
+                  reaction: data.result.reaction,
+                },
+              },
+        ),
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // 게시글 북마크 토글
+  const handleToggleBookmark = async (feedId: number, current: boolean) => {
+    const nextValue = !current;
+
+    try {
+      const res = await fetch(`/community/feeds/${feedId}/bookmark`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmark: nextValue }),
+      });
+
+      if (!res.ok) throw new Error("toggle bookmark failed");
+
+      const data: ApiResponse<BookmarkToggleResult> = await res.json();
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setItems((prev) =>
+        prev.map((it) =>
+          it.feedId !== feedId
+            ? it
+            : {
+                ...it,
+                myState: {
+                  ...it.myState,
+                  isbookmarked: data.result.isBookmarked,
+                },
+              },
+        ),
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const filteredItems = items.filter((item) => {
     if (contentType === "ALL") return true;
@@ -129,6 +210,7 @@ export default function PostList({ tab, contentType }: PostProps) {
       </div>
     );
   }
+
   return (
     <div className="flex flex-col gap-1">
       {filteredItems.map((item) => (
@@ -282,7 +364,10 @@ export default function PostList({ tab, contentType }: PostProps) {
               {/* 좋아요 */}
               <button
                 type="button"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleReaction(item.feedId, true);
+                }}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
@@ -300,7 +385,10 @@ export default function PostList({ tab, contentType }: PostProps) {
               {/* 싫어요 */}
               <button
                 type="button"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleReaction(item.feedId, false);
+                }}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
@@ -316,10 +404,14 @@ export default function PostList({ tab, contentType }: PostProps) {
               </button>
             </div>
 
+            {/* 북마크 */}
             <div className="flex gap-[8px]">
               <button
                 type="button"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleBookmark(item.feedId, item.myState.isbookmarked);
+                }}
                 className="w-6 h-6 flex items-center justify-center shrink-0"
               >
                 <img

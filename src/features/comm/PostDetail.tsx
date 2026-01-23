@@ -14,6 +14,7 @@ import badOff from "../../assets/community/bad-off.svg";
 import bookmarkOn from "../../assets/community/bookmark-on.svg";
 import bookmarkOff from "../../assets/community/bookmark-off.svg";
 import repost from "../../assets/community/repost.svg";
+import toastmsg from "../../assets/community/toastmsg.svg";
 
 type Reaction = "LIKE" | "DISLIKE" | "NONE";
 
@@ -93,11 +94,36 @@ type ApiResponse<T> = {
   result: T;
 };
 
+type ToastState = { text: string; icon?: string } | null;
+
+type LikeToggleResult = {
+  feedId: number;
+  reaction: Reaction; // "LIKE" | "DISLIKE" | "NONE"
+  counts: {
+    likes: number;
+    dislikes: number;
+  };
+};
+
+type CommentLikeToggleResult = {
+  commentId: number;
+  reaction: Reaction;
+  counts: { likes: number; dislikes: number };
+};
+
+type BookmarkToggleResult = {
+  feedId: number;
+  isBookmarked: boolean;
+};
+
 export default function PostDetail() {
   const { feedId } = useParams();
   const [detail, setDetail] = useState<FeedDetailResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
+  // 명세서에 follow 여부 추가될 경우 초기값 그걸로 받아오기
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [toast, setToast] = useState<ToastState>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollRef = useRef(false);
 
@@ -166,6 +192,7 @@ export default function PostDetail() {
 
   const tags = (feed.content.hashTags ?? []).filter(Boolean);
 
+  // 댓글 작성
   const handleAddComment = (text: string) => {
     const newComment: CommentItem = {
       commentId: Date.now(), // 임시 id (서버 붙이면 서버 id로 교체)
@@ -183,6 +210,179 @@ export default function PostDetail() {
     };
     shouldScrollRef.current = true;
     setComments((prev) => [...prev, newComment]);
+  };
+
+  // 토스트 메시지
+  const showToast = (text: string, icon?: string) => {
+    setToast({ text, icon });
+    window.setTimeout(() => setToast(null), 2000);
+  };
+
+  // 명세서 상 팔로우 요청/취소
+  type FollowStatus = "FOLLOWING" | "NONE";
+
+  type FollowResponse = {
+    targetUserId: string;
+    followStatus: FollowStatus;
+  };
+
+  const handleToggleFollow = async () => {
+    const targetUserId = feed.user.userId; // MSW에서는 일단 문자열
+
+    try {
+      const method = isFollowing ? "DELETE" : "POST";
+
+      const res = await fetch(`/users/me/followings/${targetUserId}`, {
+        method,
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) throw new Error("toggle follow failed");
+
+      const data: FollowResponse = await res.json();
+
+      const nextIsFollowing = data.followStatus === "FOLLOWING";
+      setIsFollowing(nextIsFollowing);
+
+      showToast(
+        nextIsFollowing
+          ? `@${feed.user.userId} 님을 팔로우했어요.`
+          : "팔로우를 취소했어요.",
+        nextIsFollowing ? toastmsg : undefined,
+      );
+    } catch (e) {
+      showToast("처리 중 오류가 발생했어요.");
+    }
+  };
+
+  // 게시글 좋아요/싫어요
+  const handleToggleReaction = async (like: boolean) => {
+    if (!feedId || !detail) return;
+
+    try {
+      const res = await fetch(`/community/feeds/${feedId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ like }),
+      });
+
+      if (!res.ok) throw new Error("toggle reaction failed");
+
+      const data: ApiResponse<LikeToggleResult> = await res.json();
+
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setDetail((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          feed: {
+            ...prev.feed,
+            counts: {
+              ...prev.feed.counts,
+              likes: data.result.counts.likes,
+              dislikes: data.result.counts.dislikes,
+            },
+            myState: {
+              ...prev.feed.myState,
+              reaction: data.result.reaction,
+            },
+          },
+        };
+      });
+    } catch (e) {
+      showToast("처리 중 오류가 발생했어요.");
+    }
+  };
+
+  // 게시글 댓글 좋아요/싫어요
+  const updateCommentReaction = (
+    list: CommentItem[],
+    commentId: number,
+    patch: { reaction: Reaction; likes: number; dislikes: number },
+  ): CommentItem[] => {
+    return list.map((c) => {
+      if (c.commentId === commentId) {
+        return {
+          ...c,
+          counts: { ...c.counts, likes: patch.likes, dislikes: patch.dislikes },
+          myState: { ...c.myState, reaction: patch.reaction },
+        };
+      }
+      if (c.comment && c.comment.length > 0) {
+        return {
+          ...c,
+          comment: updateCommentReaction(c.comment, commentId, patch),
+        };
+      }
+      return c;
+    });
+  };
+
+  const handleToggleCommentReaction = async (
+    commentId: number,
+    like: boolean,
+  ) => {
+    try {
+      const res = await fetch(`/community/comments/${commentId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ like }),
+      });
+
+      if (!res.ok) throw new Error("toggle comment reaction failed");
+
+      const data: ApiResponse<CommentLikeToggleResult> = await res.json();
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setComments((prev) =>
+        updateCommentReaction(prev, commentId, {
+          reaction: data.result.reaction,
+          likes: data.result.counts.likes,
+          dislikes: data.result.counts.dislikes,
+        }),
+      );
+    } catch (e) {
+      showToast("처리 중 오류가 발생했어요.");
+    }
+  };
+
+  // 게시글 북마크 토글
+  const handleToggleBookmark = async () => {
+    if (!feedId || !detail) return;
+
+    const current = detail.feed.myState.isbookmarked;
+    const nextValue = !current;
+
+    try {
+      const res = await fetch(`/community/feeds/${feedId}/bookmark`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmark: nextValue }),
+      });
+
+      if (!res.ok) throw new Error("toggle bookmark failed");
+
+      const data: ApiResponse<BookmarkToggleResult> = await res.json();
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setDetail((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          feed: {
+            ...prev.feed,
+            myState: {
+              ...prev.feed.myState,
+              isbookmarked: data.result.isBookmarked,
+            },
+          },
+        };
+      });
+    } catch (e) {
+      showToast("처리 중 오류가 발생했어요.");
+    }
   };
 
   return (
@@ -210,10 +410,16 @@ export default function PostDetail() {
             <div className="flex flex-row gap-[8px]">
               <button
                 type="button"
-                className="flex items-center justify-center px-2 py-1 bg-[#800025] w-14 h-7 rounded-[40px] text-[14px] text-[#FFF]"
+                onClick={handleToggleFollow}
+                className={
+                  isFollowing
+                    ? "flex items-center justify-center px-2 py-1 bg-white w-20 h-7 rounded-[40px] text-[14px] text-[#787878] border border-[#DADADA]"
+                    : "flex items-center justify-center px-2 py-1 bg-[#800025] w-14 h-7 rounded-[40px] text-[14px] text-[#FFF]"
+                }
               >
-                팔로우
+                {isFollowing ? "팔로우 중" : "팔로우"}
               </button>
+
               <button type="button">
                 <img src={etc} alt="더보기" />
               </button>
@@ -315,7 +521,10 @@ export default function PostDetail() {
                 {/* 좋아요 */}
                 <button
                   type="button"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleReaction(true);
+                  }}
                   className="flex items-center gap-[3px] leading-none"
                 >
                   <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
@@ -333,7 +542,10 @@ export default function PostDetail() {
                 {/* 싫어요 */}
                 <button
                   type="button"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleReaction(false);
+                  }}
                   className="flex items-center gap-[3px] leading-none"
                 >
                   <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
@@ -352,7 +564,10 @@ export default function PostDetail() {
               <div className="flex gap-[8px]">
                 <button
                   type="button"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleBookmark();
+                  }}
                   className="w-6 h-6 flex items-center justify-center shrink-0"
                 >
                   <img
@@ -369,7 +584,13 @@ export default function PostDetail() {
           </div>
         </div>
         {/* 댓글 */}
-        <div className="px-3 py-1 min-h-[200px] flex items-center justify-center">
+        <div
+          className={
+            comments.length === 0
+              ? "px-3 py-1 min-h-[200px] flex items-center justify-center"
+              : "px-3 py-1 min-h-[200px]"
+          }
+        >
           {comments.length === 0 ? (
             <div className="text-[14px] text-[#B5B5B5]">
               가장 먼저 댓글을 달 수 있는 기회에요!
@@ -377,13 +598,30 @@ export default function PostDetail() {
           ) : (
             <div className="flex flex-col gap-1">
               {comments.map((c) => (
-                <CommentRow key={c.commentId} item={c} />
+                <CommentRow
+                  key={c.commentId}
+                  item={c}
+                  onToggleReaction={(commentId, like) =>
+                    handleToggleCommentReaction(commentId, like)
+                  }
+                />
               ))}
               <div ref={bottomRef} />
             </div>
           )}
         </div>
       </div>
+
+      {toast && (
+        <div className="fixed bottom-[84px] left-1/2 -translate-x-1/2 z-50 w-[calc(100%-32px)] max-w-[390px]">
+          <div className="h-12 rounded-[4px] bg-[#787878] px-4 flex items-center gap-[10px]">
+            {toast.icon && (
+              <img src={toast.icon} alt="" className="w-5 h-5 shrink-0" />
+            )}
+            <span className="text-[16px] text-white">{toast.text}</span>
+          </div>
+        </div>
+      )}
 
       <CommentInput
         profileImg={feed.user.profileImg}

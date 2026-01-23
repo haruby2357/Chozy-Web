@@ -2,9 +2,10 @@ import { Routes, Route } from "react-router-dom";
 import Home from "../features/goodsPage/Home";
 import SearchEntry from "../features/goodsPage/SearchEntry";
 import SearchResult from "../features/goodsPage/SearchResult";
-import ReviewWrite from "../features/goodsPage/ReviewWrite";
+import ReviewWrite from "../features/comm/ReviewWrite";
 import CommMain from "../features/comm/CommMain";
 import PostDetail from "../features/comm/PostDetail";
+import MyMain from "../features/myPage/MyMain";
 
 export default function AppRouter() {
   return (
@@ -24,7 +25,7 @@ export default function AppRouter() {
 
       {/* 개인 페이지 라우팅 */}
       <Route path="/heart" element={<Home />} />
-      <Route path="/mypage" element={<Home />} />
+      <Route path="/mypage" element={<MyMain />} />
     </Routes>
   );
 }

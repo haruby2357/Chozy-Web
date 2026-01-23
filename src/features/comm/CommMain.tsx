@@ -86,7 +86,7 @@ function CommMain() {
       </div>
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40"
+          className="fixed inset-0 w-[390px] mx-auto z-40 bg-black/40"
           onClick={() => setIsModalOpen(false)}
         />
       )}
