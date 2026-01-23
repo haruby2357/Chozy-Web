@@ -368,7 +368,7 @@ const RECOMMEND_KEYWORDS = [
   { keywordId: 316, keyword: "방한용품" },
 ];
 
-export const handlers = [
+export let handlers = [
   // GET 요청: 데이터 가져오기 (ex. 사용자 프로필)
   http.get("https://api.example.com/user", () => {
     console.log("MSW: 가짜 유저 데이터를 보냅니다!");
@@ -1373,3 +1373,52 @@ handlers.push(
     }
   }),
 );
+
+// 마이페이지 메인화면
+type MyProfile = {
+  loginId: string;
+  nickname: string;
+  profileImageUrl: string | null;
+  backgroundImageUrl: string | null;
+  statusMessage: string;
+  isAccountPublic: boolean;
+  birthDate: string; // "YYYY-MM-DD"
+  heightCm: number;
+  weightKg: number;
+  isBirthPublic: boolean;
+  isHeightPublic: boolean;
+  isWeightPublic: boolean;
+  followerCount: number;
+  followingCount: number;
+  reviewCount: number;
+  bookmarkCount: number;
+};
+
+const MY_PROFILE: MyProfile = {
+  loginId: "abc123",
+  nickname: "minseok",
+  profileImageUrl: null,
+  backgroundImageUrl: null,
+  statusMessage: "오늘도 한 걸음",
+  isAccountPublic: true,
+  birthDate: "2001-05-03",
+  heightCm: 175,
+  weightKg: 70,
+  isBirthPublic: false,
+  isHeightPublic: true,
+  isWeightPublic: false,
+  followerCount: 10,
+  followingCount: 22,
+  reviewCount: 37,
+  bookmarkCount: 15,
+};
+
+handlers.push(
+  http.get("/me/profile", () => {
+    return HttpResponse.json(ok(MY_PROFILE), { status: 200 });
+  }),
+);
+
+// 이거 항상 맨 마지막 줄!!
+// handler가 너무 많아서 불러오는데 오류가 남
+handlers = [...handlers];
