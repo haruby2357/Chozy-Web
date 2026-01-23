@@ -1,41 +1,91 @@
-import starOn from "../../../assets/community/star-on.svg";
-import starOff from "../../../assets/community/star-off.svg";
-import starHalf from "../../../assets/community/star-half.svg";
+// 커뮤니티 별점 컴포넌트
 
-type Props = {
-  rating: number; // 0.0 ~ 5.0 (0.5 단위)
-};
+import starOnIcon from "../../../assets/community/star-on.svg";
+import starOffIcon from "../../../assets/community/star-off.svg";
+interface StarRatingProps {
+  rating: number;
+  onRatingChange?: (rating: number) => void;
+  isInteractive?: boolean;
+  size?: "sm" | "md";
+}
 
-export default function StarRating({ rating }: Props) {
-  const fullCount = Math.floor(rating); // 꽉 찬 별
-  const hasHalf = rating - fullCount >= 0.5; // 반 별 여부
-  const emptyCount = 5 - fullCount - (hasHalf ? 1 : 0);
+export default function StarRating({
+  rating,
+  onRatingChange,
+  isInteractive = false,
+  size = "md",
+}: StarRatingProps) {
+  const filledCount = Math.floor(rating);
+  const hasHalfStar = rating % 1 !== 0;
+  const emptyCount = 5 - Math.ceil(rating);
+
+  // 디스플레이 전용 (size: sm)
+  if (!isInteractive) {
+    return (
+      <div className="flex items-center gap-[2px]">
+        {Array.from({ length: filledCount }).map((_, i) => (
+          <img
+            key={`on-${i}`}
+            src={starOnIcon}
+            alt="별점"
+            className="w-[14px] h-[14px]"
+          />
+        ))}
+
+        {hasHalfStar && (
+          <div className="relative w-[14px] h-[14px] overflow-hidden">
+            <img src={starOnIcon} alt="반별" className="w-[14px] h-[14px]" />
+          </div>
+        )}
+
+        {Array.from({ length: emptyCount }).map((_, i) => (
+          <img
+            key={`off-${i}`}
+            src={starOffIcon}
+            alt="빈 별"
+            className="w-[14px] h-[14px]"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const starSize = size === "sm" ? "w-10 h-10" : "w-10 h-10";
 
   return (
-    <div className="flex items-center gap-[2px]">
-      {/* 꽉 찬 별 */}
-      {Array.from({ length: fullCount }).map((_, i) => (
-        <img
-          key={`full-${i}`}
-          src={starOn}
-          alt="별점"
-          className="w-[14px] h-[14px]"
-        />
-      ))}
-
-      {/* 반 별 */}
-      {hasHalf && (
-        <img src={starHalf} alt="반 별" className="w-[14px] h-[14px]" />
-      )}
-
-      {/* 빈 별 */}
-      {Array.from({ length: emptyCount }).map((_, i) => (
-        <img
-          key={`empty-${i}`}
-          src={starOff}
-          alt="빈 별"
-          className="w-[14px] h-[14px]"
-        />
+    <div className="flex gap-2 justify-center">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <div
+          key={star}
+          className={`relative ${starSize} cursor-pointer`}
+          onClick={(e) => {
+            if (!onRatingChange) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            onRatingChange(x < rect.width / 2 ? star - 0.5 : star);
+          }}
+        >
+          {/* 기본 빈 별 배경 */}
+          <img src={starOffIcon} alt="빈 별" className="w-full h-full" />
+          {/* 꽉 찬 별 */}
+          {rating >= star && (
+            <img
+              src={starOnIcon}
+              alt="채워진 별"
+              className="absolute w-full h-full top-0 left-0"
+            />
+          )}
+          {/* 반 별 */}
+          {rating === star - 0.5 && (
+            <div className="absolute top-0 left-0 h-full w-1/2 overflow-hidden">
+              <img
+                src={starOnIcon}
+                alt="반 별"
+                className="w-10 h-10 max-w-none"
+              />
+            </div>
+          )}
+        </div>
       ))}
     </div>
   );

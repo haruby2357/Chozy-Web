@@ -48,10 +48,12 @@ export default function CommentRow({
   item,
   depth = 0,
   lastAvatarRef,
+  onToggleReaction,
 }: {
   item: CommentItem;
   depth?: number;
   lastAvatarRef?: React.RefObject<HTMLImageElement | null>;
+  onToggleReaction: (commentId: number, like: boolean) => void;
 }) {
   const isChild = depth > 0;
 
@@ -175,7 +177,10 @@ export default function CommentRow({
               {/* 좋아요 */}
               <button
                 type="button"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleReaction(item.commentId, true);
+                }}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
@@ -193,7 +198,10 @@ export default function CommentRow({
               {/* 싫어요 */}
               <button
                 type="button"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleReaction(item.commentId, false);
+                }}
                 className="flex items-center gap-[3px] leading-none"
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
@@ -232,6 +240,7 @@ export default function CommentRow({
                     key={child.commentId}
                     item={child}
                     depth={depth + 1}
+                    onToggleReaction={onToggleReaction}
                     lastAvatarRef={
                       idx === previewReplies.length - 1
                         ? lastChildAvatarRef
