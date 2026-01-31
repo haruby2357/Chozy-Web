@@ -982,11 +982,11 @@ handlers.push(
     try {
       const requestBody = (await request.json()) as {
         content: string;
-        hashtags: string[];
-        img: Array<{ fileName: string; contentType: string }>;
+        hashTags: string;
+        img: Array<{ imageUrl: string; contentType: string }>;
       };
 
-      const { content } = requestBody;
+      const { content, hashTags } = requestBody;
 
       // 필수 필드 검증
       if (!content) {
@@ -1001,14 +1001,40 @@ handlers.push(
         );
       }
 
-      // 성공 응답
+      // 성공 응답 (postId 포함)
+      const postId = Math.floor(Math.random() * 100000);
+
+      // FEED_DETAIL_MAP에 새로운 포스트 데이터 추가
+      FEED_DETAIL_MAP[postId] = {
+        feed: {
+          feedId: postId,
+          type: "POST",
+          user: {
+            profileImg: "https://cdn.example.com/users/12/profile.jpg",
+            userName: "이수아",
+            userId: "KUIT_PM",
+          },
+          content: {
+            text: content,
+            contentImgs: [],
+            hashTags: hashTags ? hashTags.split(" ").filter((tag) => tag) : [],
+          },
+          counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
+          myState: { reaction: "NONE", isbookmarked: false, isreposted: false },
+        },
+        comments: [],
+      };
+
       return HttpResponse.json(
         {
           isSuccess: true,
           code: 1000,
           message: "요청에 성공하였습니다.",
           timestamp: new Date().toISOString(),
-          result: "게시글을 성공적으로 게시했어요.",
+          result: {
+            postId,
+            message: "게시글을 성공적으로 게시했어요.",
+          },
         },
         { status: 200 },
       );
