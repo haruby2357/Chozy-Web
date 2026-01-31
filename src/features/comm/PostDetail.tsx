@@ -96,6 +96,26 @@ type ApiResponse<T> = {
 
 type ToastState = { text: string; icon?: string } | null;
 
+type LikeToggleResult = {
+  feedId: number;
+  reaction: Reaction; // "LIKE" | "DISLIKE" | "NONE"
+  counts: {
+    likes: number;
+    dislikes: number;
+  };
+};
+
+type CommentLikeToggleResult = {
+  commentId: number;
+  reaction: Reaction;
+  counts: { likes: number; dislikes: number };
+};
+
+type BookmarkToggleResult = {
+  feedId: number;
+  isBookmarked: boolean;
+};
+
 export default function PostDetail() {
   const { feedId } = useParams();
   const [detail, setDetail] = useState<FeedDetailResult | null>(null);
@@ -228,8 +248,138 @@ export default function PostDetail() {
         nextIsFollowing
           ? `@${feed.user.userId} 님을 팔로우했어요.`
           : "팔로우를 취소했어요.",
-        nextIsFollowing ? toastmsg : undefined
+        nextIsFollowing ? toastmsg : undefined,
       );
+    } catch (e) {
+      showToast("처리 중 오류가 발생했어요.");
+    }
+  };
+
+  // 게시글 좋아요/싫어요
+  const handleToggleReaction = async (like: boolean) => {
+    if (!feedId || !detail) return;
+
+    try {
+      const res = await fetch(`/community/feeds/${feedId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ like }),
+      });
+
+      if (!res.ok) throw new Error("toggle reaction failed");
+
+      const data: ApiResponse<LikeToggleResult> = await res.json();
+
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setDetail((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          feed: {
+            ...prev.feed,
+            counts: {
+              ...prev.feed.counts,
+              likes: data.result.counts.likes,
+              dislikes: data.result.counts.dislikes,
+            },
+            myState: {
+              ...prev.feed.myState,
+              reaction: data.result.reaction,
+            },
+          },
+        };
+      });
+    } catch (e) {
+      showToast("처리 중 오류가 발생했어요.");
+    }
+  };
+
+  // 게시글 댓글 좋아요/싫어요
+  const updateCommentReaction = (
+    list: CommentItem[],
+    commentId: number,
+    patch: { reaction: Reaction; likes: number; dislikes: number },
+  ): CommentItem[] => {
+    return list.map((c) => {
+      if (c.commentId === commentId) {
+        return {
+          ...c,
+          counts: { ...c.counts, likes: patch.likes, dislikes: patch.dislikes },
+          myState: { ...c.myState, reaction: patch.reaction },
+        };
+      }
+      if (c.comment && c.comment.length > 0) {
+        return {
+          ...c,
+          comment: updateCommentReaction(c.comment, commentId, patch),
+        };
+      }
+      return c;
+    });
+  };
+
+  const handleToggleCommentReaction = async (
+    commentId: number,
+    like: boolean,
+  ) => {
+    try {
+      const res = await fetch(`/community/comments/${commentId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ like }),
+      });
+
+      if (!res.ok) throw new Error("toggle comment reaction failed");
+
+      const data: ApiResponse<CommentLikeToggleResult> = await res.json();
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setComments((prev) =>
+        updateCommentReaction(prev, commentId, {
+          reaction: data.result.reaction,
+          likes: data.result.counts.likes,
+          dislikes: data.result.counts.dislikes,
+        }),
+      );
+    } catch (e) {
+      showToast("처리 중 오류가 발생했어요.");
+    }
+  };
+
+  // 게시글 북마크 토글
+  const handleToggleBookmark = async () => {
+    if (!feedId || !detail) return;
+
+    const current = detail.feed.myState.isbookmarked;
+    const nextValue = !current;
+
+    try {
+      const res = await fetch(`/community/feeds/${feedId}/bookmark`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmark: nextValue }),
+      });
+
+      if (!res.ok) throw new Error("toggle bookmark failed");
+
+      const data: ApiResponse<BookmarkToggleResult> = await res.json();
+      if (data.code !== 1000) throw new Error(data.message);
+
+      setDetail((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          feed: {
+            ...prev.feed,
+            myState: {
+              ...prev.feed.myState,
+              isbookmarked: data.result.isBookmarked,
+            },
+          },
+        };
+      });
     } catch (e) {
       showToast("처리 중 오류가 발생했어요.");
     }
@@ -371,7 +521,10 @@ export default function PostDetail() {
                 {/* 좋아요 */}
                 <button
                   type="button"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleReaction(true);
+                  }}
                   className="flex items-center gap-[3px] leading-none"
                 >
                   <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
@@ -389,7 +542,10 @@ export default function PostDetail() {
                 {/* 싫어요 */}
                 <button
                   type="button"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleReaction(false);
+                  }}
                   className="flex items-center gap-[3px] leading-none"
                 >
                   <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
@@ -408,7 +564,10 @@ export default function PostDetail() {
               <div className="flex gap-[8px]">
                 <button
                   type="button"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleBookmark();
+                  }}
                   className="w-6 h-6 flex items-center justify-center shrink-0"
                 >
                   <img
@@ -425,7 +584,13 @@ export default function PostDetail() {
           </div>
         </div>
         {/* 댓글 */}
-        <div className="px-3 py-1 min-h-[200px] flex items-center justify-center">
+        <div
+          className={
+            comments.length === 0
+              ? "px-3 py-1 min-h-[200px] flex items-center justify-center"
+              : "px-3 py-1 min-h-[200px]"
+          }
+        >
           {comments.length === 0 ? (
             <div className="text-[14px] text-[#B5B5B5]">
               가장 먼저 댓글을 달 수 있는 기회에요!
@@ -433,7 +598,13 @@ export default function PostDetail() {
           ) : (
             <div className="flex flex-col gap-1">
               {comments.map((c) => (
-                <CommentRow key={c.commentId} item={c} />
+                <CommentRow
+                  key={c.commentId}
+                  item={c}
+                  onToggleReaction={(commentId, like) =>
+                    handleToggleCommentReaction(commentId, like)
+                  }
+                />
               ))}
               <div ref={bottomRef} />
             </div>
