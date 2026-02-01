@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import bgLogo from "../../assets/mypage/bgLogo.svg";
 import defaultProfile from "../../assets/mypage/defaultProfile.svg";
 import backIcon from "../../assets/all/back.svg";
 import editIcon from "../../assets/mypage/pencil.svg";
+import editPicIcon from "../../assets/mypage/edit-pic.svg";
 
 type ApiResponse<T> = {
   isSuccess: boolean;
@@ -53,6 +54,13 @@ function ProfileEdit() {
     background: "",
   });
   const [isEditingStatusMessage, setIsEditingStatusMessage] = useState(false);
+  const [imageEditModal, setImageEditModal] = useState<{
+    isOpen: boolean;
+    type: "profile" | "background" | null;
+  }>({ isOpen: false, type: null });
+  const [imageSelectModal, setImageSelectModal] = useState(false);
+  const profileFileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundFileInputRef = useRef<HTMLInputElement>(null);
 
   // 프로필 데이터 조회
   useEffect(() => {
@@ -223,6 +231,45 @@ function ProfileEdit() {
     navigate("/mypage");
   };
 
+  // 이미지 편집 모달 열기
+  const openImageEditModal = (type: "profile" | "background") => {
+    setImageSelectModal(false);
+    setImageEditModal({ isOpen: true, type });
+  };
+
+  // 이미지 파일 선택 클릭
+  const handleSelectImage = (type: "profile" | "background") => {
+    if (type === "profile") {
+      profileFileInputRef.current?.click();
+    } else {
+      backgroundFileInputRef.current?.click();
+    }
+  };
+
+  // 기본 이미지로 초기화
+  const resetToDefaultImage = (type: "profile" | "background") => {
+    if (type === "profile") {
+      setPreviewImages((prev) => ({
+        ...prev,
+        profile: "",
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        profileImage: null,
+      }));
+    } else {
+      setPreviewImages((prev) => ({
+        ...prev,
+        background: "",
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        backgroundImage: null,
+      }));
+    }
+    setImageEditModal({ isOpen: false, type: null });
+  };
+
   if (!profile) {
     return <div>로딩 중...</div>;
   }
@@ -278,12 +325,34 @@ function ProfileEdit() {
         </div>
       </div>
 
-      <div>
+      {/* 컨텐트 영역 */}
+      <div className="px-4">
         {/* 프로필 이미지 */}
-        <img
-          src={defaultProfile}
-          alt="프로필"
-          className="absolute w-20 h-20 top-62 left-4"
+        <div className="absolute w-20 h-20 top-58 left-4">
+          <img src={defaultProfile} alt="프로필" className="w-20 h-20" />
+          {/* 프로필 이미지 편집 아이콘 */}
+          <img
+            src={editPicIcon}
+            alt="프로필 편집"
+            className="absolute bottom-0 right-0 w-6 h-6 cursor-pointer"
+            onClick={() => setImageSelectModal(true)}
+          />
+        </div>
+
+        {/* 숨김 파일 입력 */}
+        <input
+          ref={profileFileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleImageSelect(e, "profile")}
+          className="hidden"
+        />
+        <input
+          ref={backgroundFileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleImageSelect(e, "background")}
+          className="hidden"
         />
 
         {/* 입력 필드 섹션 */}
@@ -453,6 +522,96 @@ function ProfileEdit() {
           </button>
         </div>
       </div>
+
+      {/* 이미지 선택 모달 (프로필 또는 배경) */}
+      {imageSelectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+          <div className="w-full bg-white rounded-t-2xl p-4">
+            {/* 모달 옵션 */}
+            <div className="space-y-3 mt-4">
+              <button
+                type="button"
+                onClick={() => openImageEditModal("profile")}
+                className="w-full py-3 text-center text-[14px] font-medium text-[#191919] bg-[#F9F9F9] rounded-[6px]"
+              >
+                프로필 사진 변경
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openImageEditModal("background")}
+                className="w-full py-3 text-center text-[14px] font-medium text-[#191919] bg-[#F9F9F9] rounded-[6px]"
+              >
+                배경 사진 변경
+              </button>
+
+              {/* 취소 버튼 */}
+              <button
+                type="button"
+                onClick={() => setImageSelectModal(false)}
+                className="w-full py-3 text-center text-[14px] font-medium text-[#191919] border border-[#E5E5E5] rounded-[6px]"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 이미지 편집 모달 */}
+      {imageEditModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+          <div className="w-full bg-white rounded-t-2xl p-4 animate-in">
+            {/* 모달 헤더 */}
+            <div className="text-center pb-4 border-b border-[#E5E5E5]">
+              <h3 className="text-[16px] font-semibold text-[#191919]">
+                {imageEditModal.type === "profile"
+                  ? "프로필 사진"
+                  : "배경 사진"}
+              </h3>
+            </div>
+
+            {/* 모달 옵션 */}
+            <div className="space-y-3 mt-4">
+              {/* 첫 번째 옵션: 기본 이미지로 변경 (사진이 있을 때만) */}
+              {((imageEditModal.type === "profile" && previewImages.profile) ||
+                (imageEditModal.type === "background" &&
+                  previewImages.background)) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetToDefaultImage(imageEditModal.type!);
+                  }}
+                  className="w-full py-3 text-center text-[14px] font-medium text-[#191919] bg-[#F9F9F9] rounded-[6px]"
+                >
+                  기본 이미지로 변경
+                </button>
+              )}
+
+              {/* 두 번째 옵션: 파일에서 가져오기 */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleSelectImage(imageEditModal.type!);
+                  setImageEditModal({ isOpen: false, type: null });
+                }}
+                className="w-full py-3 text-center text-[14px] font-medium text-[#191919] bg-[#F9F9F9] rounded-[6px]"
+              >
+                내 파일에서 가져오기
+              </button>
+
+              {/* 취소 버튼 */}
+              <button
+                type="button"
+                onClick={() => setImageEditModal({ isOpen: false, type: null })}
+                className="w-full py-3 text-center text-[14px] font-medium text-[#191919] border border-[#E5E5E5] rounded-[6px]"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
