@@ -126,7 +126,7 @@ export default function SearchResult() {
             }}
             className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
           >
-            필터 테스트(가격)
+            가격
           </button>
 
           <button
@@ -137,7 +137,7 @@ export default function SearchResult() {
             }}
             className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
           >
-            필터 테스트(별점)
+            별점
           </button>
         </div>
 
