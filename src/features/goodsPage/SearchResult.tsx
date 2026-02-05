@@ -104,18 +104,18 @@ export default function SearchResult() {
   const handleToggleLike = (productId: number) => {
     setProductList((prev) =>
       prev.map((p) =>
-        p.productId === productId ? { ...p, status: !p.status } : p
-      )
+        p.productId === productId ? { ...p, status: !p.status } : p,
+      ),
     );
   };
 
   const isEmpty = !loading && productList.length === 0;
 
   return (
-    <div className="h-full bg-white">
+    <div className="relative h-full bg-white flex flex-col">
       <SearchBar2 backBehavior="BACK" focusNavigateTo="/home/search" />
 
-      <div className="h-full overflow-y-auto scrollbar-hide pt-[68px]">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pt-[68px]">
         {/* DEV ONLY: 필터 바텀시트 테스트 진입 버튼 */}
         <div className="bg-white px-4 pb-[9px] flex gap-2">
           <button

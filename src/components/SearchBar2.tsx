@@ -122,10 +122,10 @@ export default function SearchBar2({
 
   return (
     <header className="absolute top-0 left-0 z-50 w-full bg-white pt-[9px] px-4 pb-3">
-      <div className="flex flex-row gap-3 items-center justify-start">
+      <div className="flex flex-row gap-3 items-center justify-start min-w-0">
         <button
           type="button"
-          className="w-6 h-6"
+          className="w-6 h-6 flex-shrink-0"
           onClick={() => {
             // backBehavior="BACK"이면 직전으로, 히스토리 없으면 홈 fallback
             if (backBehavior === "BACK") {
@@ -142,7 +142,7 @@ export default function SearchBar2({
 
         <div
           className={`
-            flex-1 h-[48px] rounded-[40px] px-4 py-3 flex flex-row items-center justify-between
+            flex-1 min-w-0 h-[48px] rounded-[40px] px-4 py-3 flex flex-row items-center justify-between
             ${isActive ? "border border-[#66021F]" : "border border-[#DADADA]"}
           `}
         >
@@ -151,24 +151,34 @@ export default function SearchBar2({
             type="text"
             value={displayValue}
             onChange={(e) => handleChange(e.target.value)}
+            onInput={(e) => {
+              // 한글 조합 중에도 실시간으로 값 전달 (조합 중 onChange는 호출 안 됨)
+              const cleaned = e.currentTarget.value.startsWith("#")
+                ? e.currentTarget.value.slice(1)
+                : e.currentTarget.value;
+              onChange?.(cleaned);
+            }}
             onFocus={() => {
               setFocused(true);
-              // 검색 결과에서 검색창 클릭 시 검색 전담 화면으로 재진입
               if (focusNavigateTo) navigate(focusNavigateTo);
             }}
             onBlur={() => setFocused(false)}
             onCompositionStart={() => onCompositionChange?.(true)}
-            onCompositionEnd={() => {
-              // 한글 조합 상태 동기화 목적의 지연
-              queueMicrotask(() => onCompositionChange?.(false));
+            onCompositionEnd={(e) => {
+              onCompositionChange?.(false);
+              // 조합 끝 값 최종 동기화
+              const cleaned = e.currentTarget.value.startsWith("#")
+                ? e.currentTarget.value.slice(1)
+                : e.currentTarget.value;
+              onChange?.(cleaned);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSubmit();
             }}
             placeholder="검색어를 입력하세요."
-            className={`h-[48px] flex-1 outline-none bg-transparent text-[16px] font-medium
+            className={`h-[48px] flex-1 min-w-0 outline-none bg-transparent text-[16px] font-medium
               placeholder:text-[#B9B9B9] focus:placeholder:text-[#191919]
-              whitespace-nowrap overflow-hidden
+              overflow-hidden text-ellipsis
               ${isCategoryMode && !isActive ? "text-[#66021F]" : "text-[#191919]"}
             `}
             maxLength={MAX_LEN}
@@ -177,6 +187,7 @@ export default function SearchBar2({
           {isActive && (value ?? "").length > 0 && (
             <button
               type="button"
+              className="flex-shrink-0"
               onMouseDown={(e) => e.preventDefault()}
               onClick={clearValue}
             >
