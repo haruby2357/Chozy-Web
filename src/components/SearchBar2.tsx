@@ -151,16 +151,26 @@ export default function SearchBar2({
             type="text"
             value={displayValue}
             onChange={(e) => handleChange(e.target.value)}
+            onInput={(e) => {
+              // 한글 조합 중에도 실시간으로 값 전달 (조합 중 onChange는 호출 안 됨)
+              const cleaned = e.currentTarget.value.startsWith("#")
+                ? e.currentTarget.value.slice(1)
+                : e.currentTarget.value;
+              onChange?.(cleaned);
+            }}
             onFocus={() => {
               setFocused(true);
-              // 검색 결과에서 검색창 클릭 시 검색 전담 화면으로 재진입
               if (focusNavigateTo) navigate(focusNavigateTo);
             }}
             onBlur={() => setFocused(false)}
             onCompositionStart={() => onCompositionChange?.(true)}
-            onCompositionEnd={() => {
-              // 한글 조합 상태 동기화 목적의 지연
-              queueMicrotask(() => onCompositionChange?.(false));
+            onCompositionEnd={(e) => {
+              onCompositionChange?.(false);
+              // 조합 끝 값 최종 동기화
+              const cleaned = e.currentTarget.value.startsWith("#")
+                ? e.currentTarget.value.slice(1)
+                : e.currentTarget.value;
+              onChange?.(cleaned);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSubmit();

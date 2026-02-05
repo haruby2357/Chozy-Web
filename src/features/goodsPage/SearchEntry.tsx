@@ -83,10 +83,7 @@ function renderHighlighted(text: string, keyword: string) {
       nodes.push(<span key={`pre-${i}`}>{text.slice(cursor, r.s)}</span>);
     }
     nodes.push(
-      <span
-        key={`hit-${i}`}
-        className="text-[#800020] font-semibold"
-      >
+      <span key={`hit-${i}`} className="text-[#800020] font-semibold">
         {text.slice(r.s, r.e)}
       </span>,
     );
@@ -99,7 +96,6 @@ function renderHighlighted(text: string, keyword: string) {
 
   return nodes;
 }
-
 
 export default function SearchEntry() {
   const navigate = useNavigate();
@@ -114,14 +110,14 @@ export default function SearchEntry() {
   const hasPopularKeywords = popularKeywords.length > 0;
   const hasRecentProducts = recentProducts.length > 0;
 
-  const [isComposing, setIsComposing] = useState(false); //한글 입력 조합 상태
-
   const [recommends, setRecommends] = useState<RecommendKeyword[]>([]);
 
   const trimmed = query.trim();
   const isBlankOnly = query.length > 0 && trimmed.length === 0;
 
-  const shouldShowAutocomplete = trimmed.length >= 1 && !isBlankOnly; // 자동완성 노출 조건 : 1글자 이상 + 공백만 입력 제외
+  // 자동완성 노출 조건: 1글자 이상 입력 + 공백만 입력 제외
+  // query.length으로 기존 스페이스 입력 -> 실시간 감지로 변경
+  const shouldShowAutocomplete = query.length >= 1 && !isBlankOnly;
 
   const popularSlots = useMemo(() => {
     if (hasPopularKeywords) return popularKeywords.slice(0, 8);
@@ -163,42 +159,44 @@ export default function SearchEntry() {
     return () => window.clearTimeout(id);
   }, [loadSections]);
 
-
   useEffect(() => {
     // 자동완성 숨김 조건
-    if (!shouldShowAutocomplete || isComposing) {
-      const id = window.setTimeout(() => {
-        setRecommends([]);
-      }, 0);
-      return () => window.clearTimeout(id);
+    if (!shouldShowAutocomplete) {
+      return;
     }
 
+    const ac = new AbortController();
+
+    // 디바운싱: 사용자 입력 중에는 API 호출 지연, 입력 완료 후 호출
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
           const list = await fetchJson<RecommendKeyword[]>(
             `/home/search/recommend?keyword=${encodeURIComponent(trimmed)}`,
+            ac.signal,
           );
-          const id = window.setTimeout(() => {
+          if (!ac.signal.aborted) {
             setRecommends((list ?? []).slice(0, 10));
-          }, 0);
-          return () => window.clearTimeout(id);
+          }
         } catch {
-          const id = window.setTimeout(() => {
+          if (!ac.signal.aborted) {
             setRecommends([]);
-          }, 0);
-          return () => window.clearTimeout(id);
+          }
         }
       })();
     }, 200);
 
-    return () => window.clearTimeout(timer);
-  }, [shouldShowAutocomplete, isComposing, trimmed]);
-
+    return () => {
+      window.clearTimeout(timer);
+      ac.abort();
+      // 정리 시에만 상태 초기화
+      setRecommends([]);
+    };
+  }, [trimmed, shouldShowAutocomplete]);
 
   const saveSearchKeyword = async (keyword: string) => {
     // “검색 결과 화면으로 이동할 때” 1회 API 호출
-    // Enter / 최근검색어 클릭 / 인기검색어 클릭 / (향후 자동완성 선택)
+    // Enter / 최근검색어 클릭 / 인기검색어 클릭 / 자동완성 선택
     await fetch("/home/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -240,7 +238,6 @@ export default function SearchEntry() {
         value={query}
         onChange={setQuery}
         onSubmitQuery={(q) => runSearch(q)}
-        onCompositionChange={setIsComposing}
       />
 
       <main className="pt-[72px]">
@@ -379,24 +376,32 @@ export default function SearchEntry() {
           </div>
         </section>
 
-        {/* 입력 중일때->자동완성 오버레이 : 현재는 스페이스바 눌러야 인식 가능, 이후 시간 여유 있으면 수정 */} 
-        {shouldShowAutocomplete && !isComposing && (
-          <div className="absolute inset-0 bg-white pt-[72px]">
-            {/* 0개면 빈 화면 */}
+        {/* 자동완성: 1글자 이상 입력 시 200ms 디바운싱 후 실시간 노출 */}
+        {shouldShowAutocomplete && (
+          <div
+            className="absolute inset-0 bg-white pt-[72px] z-40"
+            onMouseDown={(e) => e.preventDefault()}
+          >
             <div className="px-4 py-2">
-              {recommends.slice(0, 10).map((item) => (
-                <button
-                  key={item.keywordId}
-                  type="button"
-                  className="w-full h-[44px] flex items-center text-left gap-3"
-                  onClick={() => runSearch(item.keyword)}
-                >
-                  <img src={clueIcon} alt="" className="w-4 h-4 shrink-0" />
-                  <span className="text-[16px] text-[#191919]">
-                    {renderHighlighted(item.keyword, trimmed)}
-                  </span>
-                </button>
-              ))}
+              {recommends.length > 0 ? (
+                recommends.slice(0, 10).map((item) => (
+                  <button
+                    key={item.keywordId}
+                    type="button"
+                    className="w-full h-[44px] flex items-center text-left gap-3"
+                    onClick={() => runSearch(item.keyword)}
+                  >
+                    <img src={clueIcon} alt="" className="w-4 h-4 shrink-0" />
+                    <span className="text-[16px] text-[#191919]">
+                      {renderHighlighted(item.keyword, trimmed)}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="py-4 text-center text-[14px] text-[#B9B9B9]">
+                  추천 검색어가 없습니다.
+                </div>
+              )}
             </div>
           </div>
         )}
