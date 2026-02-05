@@ -121,8 +121,8 @@ export default function SearchBar2({
   };
 
   return (
-    <header className="absolute top-0 left-1/2 -translate-x-1/2 z-50 w-[390px] bg-white pt-[9px] px-4 pb-3">
-      <div className="flex flex-row gap-3 items-center justify-center">
+    <header className="absolute top-0 left-0 z-50 w-full bg-white pt-[9px] px-4 pb-3">
+      <div className="flex flex-row gap-3 items-center justify-start">
         <button
           type="button"
           className="w-6 h-6"
@@ -142,7 +142,7 @@ export default function SearchBar2({
 
         <div
           className={`
-            w-full h-[48px] rounded-[40px] px-4 py-3 flex flex-row items-center justify-between
+            flex-1 h-[48px] rounded-[40px] px-4 py-3 flex flex-row items-center justify-between
             ${isActive ? "border border-[#66021F]" : "border border-[#DADADA]"}
           `}
         >
