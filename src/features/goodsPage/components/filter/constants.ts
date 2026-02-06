@@ -6,10 +6,10 @@ export const SHEET_HEIGHT = {
 } as const;
 
 export const OVERLAY_CLASS =
-  "fixed left-1/2 top-0 -translate-x-1/2 w-[390px] h-[100dvh] bg-black/60";
+  "fixed inset-0 w-full h-[100dvh] bg-black/60 z-[60]";
 
 export const SHEET_CLASS =
-  "fixed left-1/2 bottom-0 -translate-x-1/2 w-[390px] z-[70] rounded-t-[20px] bg-white overflow-hidden flex flex-col";
+  "fixed left-1/2 bottom-0 -translate-x-1/2 w-[min(100vw,calc(100dvh*9/16))] z-[70] rounded-t-[20px] bg-white overflow-hidden flex flex-col";
 
 export function isConfigured(mode: PriceMode | RatingMode) {
   return mode !== "all";
