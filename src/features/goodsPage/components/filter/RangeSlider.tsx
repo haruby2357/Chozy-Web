@@ -28,11 +28,10 @@ export default function RangeSlider({
         if (disabled) return;
         onChange([v[0], v[1]] as [number, number]);
       }}
-      className="relative flex items-center w-[350px] h-[28px]"
+      className="relative flex items-center w-full h-[28px]"
     >
       <Slider.Track
         onPointerDown={(e) => {
-          // 트랙 클릭 점프 금지 => 가끔 될 때가 있는데 해결이 안되서 일단 keepㅠㅠ
           e.preventDefault();
           e.stopPropagation();
         }}
