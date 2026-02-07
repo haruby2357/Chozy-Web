@@ -5,7 +5,11 @@ import Sort, { type SortKey } from "./components/Sort";
 import Product from "./components/Product";
 
 import FilterSheet from "./components/filter/FIlterSheet";
-import type { FilterTab } from "./components/filter/types";
+import type {
+  FilterTab,
+  FilterSheetState,
+  PricePresetKey,
+} from "./components/filter/types";
 
 type ApiCategory =
   | "FASHION"
@@ -48,6 +52,32 @@ const isCategory = (v: string | null): v is ApiCategory =>
   v === "ELECTRONICS" ||
   v === "AUTOMOTIVE";
 
+const readNum = (sp: URLSearchParams, key: string) => {
+  const raw = sp.get(key);
+  if (!raw) return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+//가격 preset 복원용
+const PRESET_RANGE: Record<PricePresetKey, [number, number]> = {
+  under10k: [0, 10000],
+  "1to30k": [10000, 30000],
+  "30to50k": [30000, 50000],
+  "50to100k": [50000, 100000],
+  over100k: [100000, 100000],
+};
+
+const findPricePreset = (
+  min: number,
+  max: number,
+): PricePresetKey | undefined => {
+  return (Object.keys(PRESET_RANGE) as PricePresetKey[]).find((k) => {
+    const [a, b] = PRESET_RANGE[k];
+    return a === min && b === max;
+  });
+};
+
 export default function SearchResult() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -67,6 +97,49 @@ export default function SearchResult() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterDefaultTab, setFilterDefaultTab] = useState<FilterTab>("price");
 
+  // URL에서 필터값 읽기
+  const minPriceQ = readNum(searchParams, "minPrice");
+  const maxPriceQ = readNum(searchParams, "maxPrice");
+  const minRatingQ = readNum(searchParams, "minRating");
+  const maxRatingQ = readNum(searchParams, "maxRating");
+
+  const filterInitial: Partial<FilterSheetState> = useMemo(() => {
+    const hasPrice = minPriceQ !== undefined && maxPriceQ !== undefined;
+    const hasRating = minRatingQ !== undefined && maxRatingQ !== undefined;
+
+    const next: Partial<FilterSheetState> = {};
+
+    if (hasPrice) {
+      const preset = findPricePreset(minPriceQ!, maxPriceQ!);
+      if (preset) {
+        next.priceMode = "preset";
+        next.pricePreset = preset;
+      } else {
+        next.priceMode = "custom";
+        next.pricePreset = undefined;
+      }
+      next.priceMin = minPriceQ!;
+      next.priceMax = maxPriceQ!;
+    } else {
+      next.priceMode = "all";
+      next.pricePreset = undefined;
+      next.priceMin = 0;
+      next.priceMax = 100000;
+    }
+
+    if (hasRating) {
+      next.ratingMode = "custom";
+      next.ratingMin = minRatingQ!;
+      next.ratingMax = maxRatingQ!;
+    } else {
+      next.ratingMode = "all";
+      next.ratingMin = 0.0;
+      next.ratingMax = 5.0;
+    }
+
+    return next;
+  }, [minPriceQ, maxPriceQ, minRatingQ, maxRatingQ]);
+
   // API 요청 URL 생성
   const requestUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -75,8 +148,18 @@ export default function SearchResult() {
     else if (search) params.set("search", search);
     if (sort) params.set("sort", sort);
 
+    if (minPriceQ !== undefined && maxPriceQ !== undefined) {
+      params.set("minPrice", String(minPriceQ));
+      params.set("maxPrice", String(maxPriceQ));
+    }
+
+    if (minRatingQ !== undefined && maxRatingQ !== undefined) {
+      params.set("minRating", String(minRatingQ));
+      params.set("maxRating", String(maxRatingQ));
+    }
+
     return `/home/products?${params.toString()}`;
-  }, [category, search, sort]);
+  }, [category, search, sort, minPriceQ, maxPriceQ, minRatingQ, maxRatingQ]);
 
   useEffect(() => {
     (async () => {
@@ -112,10 +195,10 @@ export default function SearchResult() {
   const isEmpty = !loading && productList.length === 0;
 
   return (
-    <div className="h-full bg-white">
+    <div className="relative h-full bg-white flex flex-col">
       <SearchBar2 backBehavior="BACK" focusNavigateTo="/home/search" />
 
-      <div className="h-full overflow-y-auto scrollbar-hide pt-[68px]">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pt-[68px]">
         {/* DEV ONLY: 필터 바텀시트 테스트 진입 버튼 */}
         <div className="bg-white px-4 pb-[9px] flex gap-2">
           <button
@@ -126,7 +209,7 @@ export default function SearchResult() {
             }}
             className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
           >
-            필터 테스트(가격)
+            가격
           </button>
 
           <button
@@ -137,7 +220,7 @@ export default function SearchResult() {
             }}
             className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
           >
-            필터 테스트(별점)
+            별점
           </button>
         </div>
 
@@ -145,9 +228,30 @@ export default function SearchResult() {
           open={filterOpen}
           onOpenChange={setFilterOpen}
           defaultTab={filterDefaultTab}
+          initial={filterInitial}
           onConfirm={(state) => {
-            // TODO: 필터 버튼 라벨/검색 파라미터로 연결
-            console.log("필터 확인:", state);
+            const next = new URLSearchParams(searchParams);
+
+            // 가격
+            if (state.priceMode === "all") {
+              next.delete("minPrice");
+              next.delete("maxPrice");
+            } else {
+              // 나중에 연동 시 preset/custom 모두 최종 min/max만 서버로 전송하면 됨
+              next.set("minPrice", String(state.priceMin ?? 0));
+              next.set("maxPrice", String(state.priceMax ?? 100000));
+            }
+
+            // 별점
+            if (state.ratingMode === "all") {
+              next.delete("minRating");
+              next.delete("maxRating");
+            } else {
+              next.set("minRating", String(state.ratingMin ?? 0.0));
+              next.set("maxRating", String(state.ratingMax ?? 5.0));
+            }
+
+            setSearchParams(next);
           }}
         />
 

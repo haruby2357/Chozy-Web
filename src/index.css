@@ -11,7 +11,7 @@ body {
   height: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
 }
 
 a {
@@ -40,16 +40,30 @@ button {
 }
 
 .app-frame {
-  width: 390px;
-  height: 844px;
   position: relative;
-  overflow-y: hidden;
-}
+  background: #fff;
 
-/* 스크롤은 가능하지만 스크롤바는 숨김 */
-.scrollbar-hide {
+  /* 세로 화면 채우기*/
+  height: 100dvh;
+  height: 100vh;
+
+  /* 가로는 세로 비율(9:16) 기준으로 맞추기, 화면보다 커지면 100vw 제한 */
+  width: min(100vw, calc(100dvh * 9 / 16));
+  width: min(100vw, calc(100vh * 9 / 16));
+
+  position: relative;
+  background: #fff;
+
+   overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+
   -ms-overflow-style: none; /* IE, Edge */
   scrollbar-width: none; /* Firefox */
+
+}
+
+.app-frame::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .scrollbar-hide::-webkit-scrollbar {

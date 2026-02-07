@@ -10,6 +10,7 @@ import PriceFilterPanel from "./PriceFilterPanel";
 import RatingFilterPanel from "./RatingFilterPanel";
 
 import closeIcon from "../../../../assets/filter/Icon s-2.svg";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 type Props = {
   open: boolean;
@@ -62,6 +63,13 @@ function SheetBody({
 
   return (
     <Dialog.Content className={SHEET_CLASS} style={{ height }}>
+      {/* CHANGED: Radix Dialog 접근성 경고 해결 (Title/Description 제공) */}
+      <VisuallyHidden>
+        <Dialog.Title>상품 필터</Dialog.Title>
+        <Dialog.Description>
+          가격 또는 별점을 선택한 뒤 확인을 누르면 결과에 반영됩니다.
+        </Dialog.Description>
+      </VisuallyHidden>
       <button
         type="button"
         onClick={onClose}
