@@ -33,8 +33,21 @@ export default function StarRating({
         ))}
 
         {hasHalfStar && (
-          <div className="relative w-[14px] h-[14px] overflow-hidden">
-            <img src={starOnIcon} alt="반별" className="w-[14px] h-[14px]" />
+          <div className="relative w-[14px] h-[14px]">
+            {/* 빈 별 */}
+            <img
+              src={starOffIcon}
+              alt="빈 별"
+              className="absolute top-0 left-0 w-[14px] h-[14px]"
+            />
+            {/* 반 채운 별 */}
+            <div className="absolute top-0 left-0 h-full w-1/2 overflow-hidden">
+              <img
+                src={starOnIcon}
+                alt="반 별"
+                className="w-[14px] h-[14px] max-w-none"
+              />
+            </div>
           </div>
         )}
 

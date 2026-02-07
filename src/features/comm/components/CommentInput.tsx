@@ -20,8 +20,8 @@ export default function CommentInput({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="mx-auto max-w-[390px] h-[60px] bg-white shadow-[0_-4px_10px_0_rgba(0,0,0,0.04)] px-4 py-3">
+    <div className="absolute bottom-0 left-0 right-0 z-50">
+      <div className="w-full h-[60px] bg-white shadow-[0_-4px_10px_0_rgba(0,0,0,0.04)] px-4 py-3">
         <div className="flex items-center gap-3">
           <img
             src={profileImg}

@@ -90,7 +90,7 @@ function Home() {
         const res = await fetch("/home/search/popular");
         const data: ApiResponse<ApiKeyword[]> = await res.json();
         setPopularKeywords(
-          (data.result ?? []).slice(0, 10).map((k) => k.keyword)
+          (data.result ?? []).slice(0, 10).map((k) => k.keyword),
         );
       } catch (e) {
         console.error("인기검색어 로딩 실패:", e);
@@ -120,8 +120,8 @@ function Home() {
   const handleToggleLike = (productId: number) => {
     setProductList((prev) =>
       prev.map((item) =>
-        item.productId === productId ? { ...item, status: !item.status } : item
-      )
+        item.productId === productId ? { ...item, status: !item.status } : item,
+      ),
     );
   };
 
@@ -132,7 +132,7 @@ function Home() {
         <div className="scroll-available h-full overflow-y-auto overflow-x-hidden pt-[48px] scrollbar-hide">
           <main className="flex flex-col gap-3">
             {/* 검색창 && 인기검색어 */}
-            <div className="flex flex-col px-4 pt-2 pb-3 gap-3 shadow-[0_4px_10px_0_rgba(0,0,0,0.04)]">
+            <div className="flex flex-col px-4 pt-2 pb-3 gap-3 shadow-[0_4px_10px_0_rgba(0,0,0,0.04)] bg-[#F9F9F9]">
               <SearchBar />
 
               <div className="flex items-center gap-3">
@@ -146,7 +146,7 @@ function Home() {
                       key={keyword}
                       onClick={() => {
                         navigate(
-                          `/home/products?search=${encodeURIComponent(keyword)}`
+                          `/home/products?search=${encodeURIComponent(keyword)}`,
                         );
                       }}
                       className="flex-shrink-0 text-[#787878] text-[14px]"
@@ -191,7 +191,7 @@ function Home() {
               <div
                 className="grid gap-x-1 gap-y-4 
             [grid-template-columns:repeat(auto-fill,minmax(177px,1fr))]
-            justify-items-start"
+            justify-items-center"
               >
                 {productList.map((p) => (
                   <Product

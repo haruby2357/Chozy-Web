@@ -180,7 +180,7 @@ export default function SearchResult() {
   const handleSortChange = (nextSort: SortKey) => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("sort", nextSort);
-    setSearchParams(nextParams);
+    setSearchParams(nextParams, { replace: true });
   };
 
   // 좋아요 토글(서버 연동 전): status 토글
@@ -251,7 +251,7 @@ export default function SearchResult() {
               next.set("maxRating", String(state.ratingMax ?? 5.0));
             }
 
-            setSearchParams(next);
+            setSearchParams(next, { replace: true });
           }}
         />
 
@@ -282,7 +282,7 @@ export default function SearchResult() {
             <div
               className="grid gap-x-1 gap-y-4 
               [grid-template-columns:repeat(auto-fill,minmax(177px,1fr))]
-              justify-items-start"
+              justify-items-center"
             >
               {productList.map((p) => (
                 <Product
