@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import Login from "../features/login/Login";
 import Home from "../features/goodsPage/Home";
 import SearchEntry from "../features/goodsPage/SearchEntry";
 import SearchResult from "../features/goodsPage/SearchResult";
@@ -16,6 +17,7 @@ export default function AppRouter() {
     // Nav바 동작 확인을 위한 임시 라우팅
     // 추후 개별 페이지 구현 시 교체 예정
     <Routes>
+      <Route path="/login" element={<Login />} />
       <Route path="/" element={<Home />} />
 
       {/* 상품 검색 페이지 라우팅 */}
