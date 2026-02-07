@@ -104,8 +104,8 @@ export default function SearchResult() {
   const handleToggleLike = (productId: number) => {
     setProductList((prev) =>
       prev.map((p) =>
-        p.productId === productId ? { ...p, status: !p.status } : p
-      )
+        p.productId === productId ? { ...p, status: !p.status } : p,
+      ),
     );
   };
 

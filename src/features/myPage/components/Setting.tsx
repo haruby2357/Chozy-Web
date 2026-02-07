@@ -92,6 +92,7 @@ export default function Setting() {
           </button>
           <button
             type="button"
+            onClick={() => navigate("/mypage/withdraw")}
             className="w-full text-left py-4 text-[#191919] text-[16px]"
           >
             회원 탈퇴
