@@ -11,6 +11,8 @@ import Setting from "../features/myPage/components/Setting";
 import PostWrite from "../features/comm/PostWrite";
 import LikePost from "../features/myPage/components/setting/LikePost";
 import BlockedAccounts from "../features/myPage/components/setting/BlockedAccounts";
+import WithdrawAccount from "../features/myPage/components/setting/WithdrawAccount";
+import WithdrawComplete from "../features/myPage/components/setting/WithdrawComplete";
 
 export default function AppRouter() {
   return (
@@ -34,6 +36,8 @@ export default function AppRouter() {
       <Route path="/mypage/setting" element={<Setting />} />
       <Route path="/mypage/likepost" element={<LikePost />} />
       <Route path="/mypage/blocked" element={<BlockedAccounts />} />
+      <Route path="/mypage/withdraw" element={<WithdrawAccount />} />
+      <Route path="/mypage/withdraw/complete" element={<WithdrawComplete />} />
     </Routes>
   );
 }

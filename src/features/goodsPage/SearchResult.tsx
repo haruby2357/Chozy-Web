@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import SearchBar2 from "../../components/SearchBar2";
 import Sort, { type SortKey } from "./components/Sort";
 import Product from "./components/Product";
+import filter from "../../assets/all/filter.svg";
 
 import FilterSheet from "./components/filter/FIlterSheet";
 import type {
@@ -180,7 +181,7 @@ export default function SearchResult() {
   const handleSortChange = (nextSort: SortKey) => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("sort", nextSort);
-    setSearchParams(nextParams);
+    setSearchParams(nextParams, { replace: true });
   };
 
   // 좋아요 토글(서버 연동 전): status 토글
@@ -198,7 +199,7 @@ export default function SearchResult() {
     <div className="relative h-full bg-white flex flex-col">
       <SearchBar2 backBehavior="BACK" focusNavigateTo="/home/search" />
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide pt-[68px]">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pt-20">
         {/* DEV ONLY: 필터 바텀시트 테스트 진입 버튼 */}
         <div className="bg-white px-4 pb-[9px] flex gap-2">
           <button
@@ -207,9 +208,15 @@ export default function SearchResult() {
               setFilterDefaultTab("price");
               setFilterOpen(true);
             }}
-            className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
+            className="
+            flex items-center gap-[2px] 
+            w-auto h-8 rounded-[20px] 
+            pl-3 pr-2
+            border border-[#DADADA] 
+            "
           >
-            가격
+            <span className="text-[14px] text-[#575757]">가격</span>
+            <img src={filter} alt="필터" />
           </button>
 
           <button
@@ -218,9 +225,15 @@ export default function SearchResult() {
               setFilterDefaultTab("rating");
               setFilterOpen(true);
             }}
-            className="px-3 py-2 text-[14px] font-medium bg-[#F2F2F2] rounded"
+            className="
+            flex items-center gap-[2px] 
+            w-auto h-8 rounded-[20px] 
+            pl-3 pr-2
+            border border-[#DADADA] 
+            "
           >
-            별점
+            <span className="text-[14px] text-[#575757]">별점</span>
+            <img src={filter} alt="필터" />
           </button>
         </div>
 
@@ -251,7 +264,7 @@ export default function SearchResult() {
               next.set("maxRating", String(state.ratingMax ?? 5.0));
             }
 
-            setSearchParams(next);
+            setSearchParams(next, { replace: true });
           }}
         />
 
@@ -282,7 +295,7 @@ export default function SearchResult() {
             <div
               className="grid gap-x-1 gap-y-4 
               [grid-template-columns:repeat(auto-fill,minmax(177px,1fr))]
-              justify-items-start"
+              justify-items-center"
             >
               {productList.map((p) => (
                 <Product

@@ -9,7 +9,8 @@ import badOn from "../../../assets/community/bad-on.svg";
 import badOff from "../../../assets/community/bad-off.svg";
 import bookmarkOn from "../../../assets/community/bookmark-on.svg";
 import bookmarkOff from "../../../assets/community/bookmark-off.svg";
-import repost from "../../../assets/community/repost.svg";
+import share from "../../../assets/community/repost.svg";
+import ShareBottomSheet from "./ShareBottomSheet";
 
 type Tab = "RECOMMEND" | "FOLLOWING";
 type ContentType = "ALL" | "POST" | "REVIEW";
@@ -101,6 +102,43 @@ export default function PostList({ tab, contentType }: PostProps) {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // 공유
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+
+  const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  const buildShareUrl = (feedId: number) => {
+    // 배포 링크 고정하고 싶으면 이거 추천:
+    return `https://chozy.net/community/feeds/${feedId}`;
+    // 개발/배포 자동:
+    // return `${window.location.origin}/community/feeds/${feedId}`;
+  };
+
+  const handleShare = async (feedId: number) => {
+    const url = buildShareUrl(feedId);
+
+    // ✅ 폰 + Web Share 지원이면 -> OS 공유 시트(카톡/메시지 등)
+    if (isMobile() && navigator.share) {
+      try {
+        await navigator.share({
+          title: "Chozy",
+          text: "게시글 공유",
+          url,
+        });
+        return;
+      } catch (e) {
+        // 사용자가 취소해도 여기로 올 수 있음(정상)
+        console.log("share cancelled/failed:", e);
+        return;
+      }
+    }
+
+    // ✅ PC(또는 미지원) -> 바텀시트(링크복사만)
+    setShareUrl(url);
+    setShareOpen(true);
+  };
+  
   useEffect(() => {
     const run = async () => {
       try {
@@ -212,221 +250,242 @@ export default function PostList({ tab, contentType }: PostProps) {
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      {filteredItems.map((item) => (
-        <div
-          key={item.feedId}
-          role="button"
-          onClick={() => navigate(`/community/feeds/${item.feedId}`)}
-          className="px-[8px] py-3 bg-white"
-        >
-          {/* 프로필 */}
-          <div className="flex flex-row gap-[8px] mb-[8px]">
-            <img
-              src={item.user.profileImg}
-              alt="프로필"
-              className="w-10 h-10 rounded-[40px] border border-[#F9F9F9]"
-            />
-            <div className="flex flex-col gap-[2px]">
-              <span className="text-[#191919] text-[14px] font-medium">
-                {item.user.userName}
-              </span>
-              <span className="text-[#B5B5B5] text-[12px]">
-                @{item.user.userId}
-              </span>
-            </div>
-          </div>
-
-          {/* 리뷰일 때만 */}
-          {item.type === "REVIEW" && (
-            <div className="mb-3">
-              <div className="flex flex-row gap-1 mb-1">
-                <span className="text-[#800025] text-[16px] font-semibold">
-                  {item.content.vendor}
+    <>
+      <div className="flex flex-col gap-1">
+        {filteredItems.map((item) => (
+          <div
+            key={item.feedId}
+            role="button"
+            onClick={() => navigate(`/community/feeds/${item.feedId}`)}
+            className="px-[8px] py-3 bg-white"
+          >
+            {/* 프로필 */}
+            <div className="flex flex-row gap-[8px] mb-[8px]">
+              <img
+                src={item.user.profileImg}
+                alt="프로필"
+                className="w-10 h-10 rounded-[40px] border border-[#F9F9F9]"
+              />
+              <div className="flex flex-col gap-[2px]">
+                <span className="text-[#191919] text-[14px] font-medium">
+                  {item.user.userName}
                 </span>
-                <span className="text-[#191919] text-[16px] font-medium">
-                  {item.content.title}
-                </span>
-              </div>
-              <div className="flex flex-row gap-1">
-                <StarRating rating={item.content.rating} />
-                <span className="text-[#B5B5B5] text-[13px]">
-                  {item.content.rating.toFixed(1)}
+                <span className="text-[#B5B5B5] text-[12px]">
+                  @{item.user.userId}
                 </span>
               </div>
             </div>
-          )}
 
-          {/* 본문 */}
-          <div className="flex flex-col gap-3">
-            <div className="text-[14px] line-clamp-3 whitespace-pre-line">
-              {item.content.text}
-            </div>
-            {!!(item.content.contentImgs ?? []).filter(Boolean).length && (
-              <div className="mt-3 flex gap-[2px] overflow-x-auto scrollbar-hide">
-                {(item.content.contentImgs ?? [])
-                  .filter(Boolean)
-                  .map((imgString, index) => (
-                    <img key={index} src={imgString} alt="게시글이미지" />
-                  ))}
-              </div>
-            )}
-          </div>
-
-          {/* 인용 글일 결우 */}
-          {hasQuoteContent(item.content) && (
-            <div className="mt-5 rounded-[4px] border border-[#DADADA] px-[8px] py-3">
-              <div className="flex flex-row gap-[8px] mb-[8px]">
-                <img
-                  src={item.content.quoteContent.user.profileImg}
-                  alt="인용 프로필"
-                  className="w-8 h-8 rounded-full border border-[#F9F9F9]"
-                />
-                <div className="flex flex-col gap-[2px]">
-                  <span className="text-[#191919] text-[13px] font-medium">
-                    {item.content.quoteContent.user.userName}
+            {/* 리뷰일 때만 */}
+            {item.type === "REVIEW" && (
+              <div className="mb-3">
+                <div className="flex flex-row gap-1 mb-1">
+                  <span className="text-[#800025] text-[16px] font-semibold">
+                    {item.content.vendor}
                   </span>
-                  <span className="text-[#B5B5B5] text-[11px]">
-                    @{item.content.quoteContent.user.userId}
+                  <span className="text-[#191919] text-[16px] font-medium">
+                    {item.content.title}
+                  </span>
+                </div>
+                <div className="flex flex-row gap-1">
+                  <StarRating rating={item.content.rating} />
+                  <span className="text-[#B5B5B5] text-[13px]">
+                    {item.content.rating.toFixed(1)}
                   </span>
                 </div>
               </div>
+            )}
 
-              <div className="flex flex-row gap-1 mb-1">
-                <span className="text-[#800025] text-[16px] font-semibold">
-                  {item.content.quoteContent.vendor}
-                </span>
-                <span className="text-[#191919] text-[16px] font-medium">
-                  {item.content.quoteContent.title}
-                </span>
+            {/* 본문 */}
+            <div className="flex flex-col gap-3">
+              <div className="text-[14px] line-clamp-3 whitespace-pre-line">
+                {item.content.text}
               </div>
-
-              <div className="flex flex-row gap-1">
-                <StarRating rating={item.content.quoteContent.rating} />
-                <span className="text-[#B5B5B5] text-[13px]">
-                  {item.content.quoteContent.rating.toFixed(1)}
-                </span>
-              </div>
-
-              <p className="text-[14px] line-clamp-4 whitespace-pre-line mt-2">
-                {item.content.quoteContent.text}
-              </p>
-
-              {!!item.content.quoteContent.contentImgs?.filter(Boolean)
-                .length && (
+              {!!(item.content.contentImgs ?? []).filter(Boolean).length && (
                 <div className="mt-3 flex gap-[2px] overflow-x-auto scrollbar-hide">
-                  {item.content.quoteContent.contentImgs
+                  {(item.content.contentImgs ?? [])
                     .filter(Boolean)
-                    .map((src, idx) => (
-                      <img
-                        key={idx}
-                        src={src}
-                        alt="인용 이미지"
-                        className="w-full aspect-square rounded-[4px] object-cover"
-                      />
+                    .map((imgString, index) => (
+                      <img key={index} src={imgString} alt="게시글이미지" />
                     ))}
                 </div>
               )}
             </div>
-          )}
 
-          {/* 포스트 상태바 */}
-          <div className="pl-1 flex items-center justify-between mt-5">
-            <div className="flex gap-3">
-              {/* 댓글 */}
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-[3px] leading-none"
-              >
-                <span className="w-6 h-6 flex items-center justify-center shrink-0">
-                  <img src={comment} alt="댓글수" className="w-6 h-6 block" />
-                </span>
-                <span className="text-[13px] leading-none">
-                  {item.counts.comments}
-                </span>
-              </button>
-
-              {/* 인용 */}
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-[3px] leading-none"
-              >
-                <span className="w-6 h-6 flex items-center justify-center shrink-0">
-                  <img src={quotation} alt="인용수" className="w-6 h-6 block" />
-                </span>
-                <span className="text-[13px] leading-none">
-                  {item.counts.quotes}
-                </span>
-              </button>
-
-              {/* 좋아요 */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleReaction(item.feedId, true);
-                }}
-                className="flex items-center gap-[3px] leading-none"
-              >
-                <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
+            {/* 인용 글일 결우 */}
+            {hasQuoteContent(item.content) && (
+              <div className="mt-5 rounded-[4px] border border-[#DADADA] px-[8px] py-3">
+                <div className="flex flex-row gap-[8px] mb-[8px]">
                   <img
-                    src={item.myState.reaction === "LIKE" ? goodOn : goodOff}
-                    alt="좋아요수"
+                    src={item.content.quoteContent.user.profileImg}
+                    alt="인용 프로필"
+                    className="w-8 h-8 rounded-full border border-[#F9F9F9]"
+                  />
+                  <div className="flex flex-col gap-[2px]">
+                    <span className="text-[#191919] text-[13px] font-medium">
+                      {item.content.quoteContent.user.userName}
+                    </span>
+                    <span className="text-[#B5B5B5] text-[11px]">
+                      @{item.content.quoteContent.user.userId}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-row gap-1 mb-1">
+                  <span className="text-[#800025] text-[16px] font-semibold">
+                    {item.content.quoteContent.vendor}
+                  </span>
+                  <span className="text-[#191919] text-[16px] font-medium">
+                    {item.content.quoteContent.title}
+                  </span>
+                </div>
+
+                <div className="flex flex-row gap-1">
+                  <StarRating rating={item.content.quoteContent.rating} />
+                  <span className="text-[#B5B5B5] text-[13px]">
+                    {item.content.quoteContent.rating.toFixed(1)}
+                  </span>
+                </div>
+
+                <p className="text-[14px] line-clamp-4 whitespace-pre-line mt-2">
+                  {item.content.quoteContent.text}
+                </p>
+
+                {!!item.content.quoteContent.contentImgs?.filter(Boolean)
+                  .length && (
+                  <div className="mt-3 flex gap-[2px] overflow-x-auto scrollbar-hide">
+                    {item.content.quoteContent.contentImgs
+                      .filter(Boolean)
+                      .map((src, idx) => (
+                        <img
+                          key={idx}
+                          src={src}
+                          alt="인용 이미지"
+                          className="w-full aspect-square rounded-[4px] object-cover"
+                        />
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 포스트 상태바 */}
+            <div className="pl-1 flex items-center justify-between mt-5">
+              <div className="flex gap-3">
+                {/* 댓글 */}
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-[3px] leading-none"
+                >
+                  <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                    <img src={comment} alt="댓글수" className="w-6 h-6 block" />
+                  </span>
+                  <span className="text-[13px] leading-none">
+                    {item.counts.comments}
+                  </span>
+                </button>
+
+                {/* 인용 */}
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-[3px] leading-none"
+                >
+                  <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                    <img
+                      src={quotation}
+                      alt="인용수"
+                      className="w-6 h-6 block"
+                    />
+                  </span>
+                  <span className="text-[13px] leading-none">
+                    {item.counts.quotes}
+                  </span>
+                </button>
+
+                {/* 좋아요 */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleReaction(item.feedId, true);
+                  }}
+                  className="flex items-center gap-[3px] leading-none"
+                >
+                  <span className="w-6 h-6 flex items-center justify-center shrink-0 pb-[5px] pl-1 pr-[3px]">
+                    <img
+                      src={item.myState.reaction === "LIKE" ? goodOn : goodOff}
+                      alt="좋아요수"
+                      className="w-6 h-6 block"
+                    />
+                  </span>
+                  <span className="text-[13px] leading-none">
+                    {item.counts.likes}
+                  </span>
+                </button>
+
+                {/* 싫어요 */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleReaction(item.feedId, false);
+                  }}
+                  className="flex items-center gap-[3px] leading-none"
+                >
+                  <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
+                    <img
+                      src={item.myState.reaction === "DISLIKE" ? badOn : badOff}
+                      alt="싫어요수"
+                      className="w-6 h-6 block"
+                    />
+                  </span>
+                  <span className="text-[13px] leading-none">
+                    {item.counts.dislikes}
+                  </span>
+                </button>
+              </div>
+
+              {/* 북마크 */}
+              <div className="flex gap-[8px]">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleBookmark(
+                      item.feedId,
+                      item.myState.isbookmarked,
+                    );
+                  }}
+                  className="w-6 h-6 flex items-center justify-center shrink-0"
+                >
+                  <img
+                    src={item.myState.isbookmarked ? bookmarkOn : bookmarkOff}
+                    alt="북마크"
                     className="w-6 h-6 block"
                   />
-                </span>
-                <span className="text-[13px] leading-none">
-                  {item.counts.likes}
-                </span>
-              </button>
-
-              {/* 싫어요 */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleReaction(item.feedId, false);
-                }}
-                className="flex items-center gap-[3px] leading-none"
-              >
-                <span className="w-6 h-6 flex items-center justify-center shrink-0 pt-[5px] pl-1 pr-[3px]">
-                  <img
-                    src={item.myState.reaction === "DISLIKE" ? badOn : badOff}
-                    alt="싫어요수"
-                    className="w-6 h-6 block"
-                  />
-                </span>
-                <span className="text-[13px] leading-none">
-                  {item.counts.dislikes}
-                </span>
-              </button>
-            </div>
-
-            {/* 북마크 */}
-            <div className="flex gap-[8px]">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleBookmark(item.feedId, item.myState.isbookmarked);
-                }}
-                className="w-6 h-6 flex items-center justify-center shrink-0"
-              >
-                <img
-                  src={item.myState.isbookmarked ? bookmarkOn : bookmarkOff}
-                  alt="북마크"
-                  className="w-6 h-6 block"
-                />
-              </button>
-              <span className="w-6 h-6 flex items-center justify-center shrink-0">
-                <img src={repost} alt="재게시" className="w-6 h-6 block" />
-              </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation(); // 카드 상세 이동 방지
+                    handleShare(item.feedId);
+                  }}
+                  className="w-6 h-6 flex items-center justify-center shrink-0"
+                >
+                  <img src={share} alt="공유" className="w-6 h-6 block" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+      <ShareBottomSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        shareUrl={shareUrl}
+      />
+    </>
   );
 }

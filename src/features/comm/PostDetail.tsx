@@ -13,7 +13,7 @@ import badOn from "../../assets/community/bad-on.svg";
 import badOff from "../../assets/community/bad-off.svg";
 import bookmarkOn from "../../assets/community/bookmark-on.svg";
 import bookmarkOff from "../../assets/community/bookmark-off.svg";
-import repost from "../../assets/community/repost.svg";
+import share from "../../assets/community/repost.svg";
 import toastmsg from "../../assets/community/toastmsg.svg";
 
 type Reaction = "LIKE" | "DISLIKE" | "NONE";
@@ -577,7 +577,7 @@ export default function PostDetail() {
                   />
                 </button>
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
-                  <img src={repost} alt="재게시" className="w-6 h-6 block" />
+                  <img src={share} alt="공유" className="w-6 h-6 block" />
                 </span>
               </div>
             </div>
