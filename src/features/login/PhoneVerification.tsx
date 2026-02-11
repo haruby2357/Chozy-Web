@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import DetailHeader from "../../components/DetailHeader";
 import SubmitButton from "../../components/SubmitButton";
+import Toast from "../../components/Toast";
 import cancelIcon from "../../assets/all/cancel.svg";
 import checkCircleIcon from "../../assets/all/check-circle.svg";
 import checkVerificationIcon from "../../assets/login/check-verification.svg";
@@ -238,15 +239,7 @@ export default function PhoneVerification() {
 
       {/* 하단 버튼 */}
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[380px] px-4">
-        {/* 토스트 메시지 */}
-        {toast && (
-          <div className="mb-4 h-12 rounded-[4px] bg-[#787878] px-4 flex items-center gap-[10px]">
-            {toast.icon && (
-              <img src={toast.icon} alt="" className="w-5 h-5 shrink-0" />
-            )}
-            <span className="text-[16px] text-white">{toast.message}</span>
-          </div>
-        )}
+        <Toast toast={toast} />
         <SubmitButton
           label="다음"
           onSubmit={() => navigate("/login/signup")}
