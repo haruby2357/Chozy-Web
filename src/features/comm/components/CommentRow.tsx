@@ -75,7 +75,6 @@ export default function CommentRow({
   const isChild = depth > 0;
 
   const rawChildren = item.comment ?? [];
-  const hasChildren = rawChildren.length > 0;
 
   const childrenForRender = useMemo(() => {
     if (depth !== 0) return [];
@@ -100,8 +99,6 @@ export default function CommentRow({
   const parentAvatarRef = useRef<HTMLImageElement | null>(null);
   const repliesWrapRef = useRef<HTMLDivElement | null>(null);
   const lastChildAvatarRef = useRef<HTMLImageElement | null>(null);
-
-  const repliesIndentClass = depth === 0 ? "pl-4" : "pl-0";
 
   const [lineStyle, setLineStyle] = useState<{
     top: number;
