@@ -1,4 +1,14 @@
 import { Routes, Route } from "react-router-dom";
+import Login from "../features/login/Login";
+import Terms from "../features/login/Terms";
+import ServiceTerms from "../features/login/ServiceTerms";
+import PrivacyPolicy from "../features/login/PrivacyPolicy";
+import VerificationMethod from "../features/login/VerificationMethod";
+import PhoneVerification from "../features/login/PhoneVerification";
+import EmailVerification from "../features/login/EmailVerification";
+import SignUp from "../features/login/SignUp";
+import Nickname from "../features/login/Nickname";
+import SignUpComplete from "../features/login/SignUpComplete";
 import Home from "../features/goodsPage/Home";
 import SearchEntry from "../features/goodsPage/SearchEntry";
 import SearchResult from "../features/goodsPage/SearchResult";
@@ -17,6 +27,22 @@ import WithdrawComplete from "../features/myPage/components/setting/WithdrawComp
 export default function AppRouter() {
   return (
     <Routes>
+      {/* 로그인 페이지 라우팅 */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/login/terms" element={<Terms />} />
+      <Route path="/login/terms/service" element={<ServiceTerms />} />
+      <Route path="/login/terms/privacy" element={<PrivacyPolicy />} />
+      <Route
+        path="/login/terms/verification"
+        element={<VerificationMethod />}
+      />
+      <Route path="/login/verification/phone" element={<PhoneVerification />} />
+      <Route path="/login/verification/email" element={<EmailVerification />} />
+      <Route path="/login/signup" element={<SignUp />} />
+      <Route path="/login/nickname" element={<Nickname />} />
+      <Route path="/login/complete" element={<SignUpComplete />} />
+
+      {/* 홈 페이지 라우팅 */}
       <Route path="/" element={<Home />} />
 
       {/* 상품 검색 페이지 라우팅 */}
