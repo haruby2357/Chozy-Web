@@ -5,6 +5,7 @@ import ServiceTerms from "../features/login/ServiceTerms";
 import PrivacyPolicy from "../features/login/PrivacyPolicy";
 import VerificationMethod from "../features/login/VerificationMethod";
 import PhoneVerification from "../features/login/PhoneVerification";
+import EmailVerification from "../features/login/EmailVerification";
 import Home from "../features/goodsPage/Home";
 import SearchEntry from "../features/goodsPage/SearchEntry";
 import SearchResult from "../features/goodsPage/SearchResult";
@@ -22,6 +23,7 @@ export default function AppRouter() {
     // Nav바 동작 확인을 위한 임시 라우팅
     // 추후 개별 페이지 구현 시 교체 예정
     <Routes>
+      {/* 로그인 페이지 라우팅 */}
       <Route path="/login" element={<Login />} />
       <Route path="/login/terms" element={<Terms />} />
       <Route path="/login/terms/service" element={<ServiceTerms />} />
@@ -31,6 +33,9 @@ export default function AppRouter() {
         element={<VerificationMethod />}
       />
       <Route path="/login/verification/phone" element={<PhoneVerification />} />
+      <Route path="/login/verification/email" element={<EmailVerification />} />
+
+      {/* 홈 페이지 라우팅 */}
       <Route path="/" element={<Home />} />
 
       {/* 상품 검색 페이지 라우팅 */}

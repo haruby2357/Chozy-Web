@@ -8,12 +8,12 @@ import cancelIcon from "../../assets/all/cancel.svg";
 import checkCircleIcon from "../../assets/all/check-circle.svg";
 import checkVerificationIcon from "../../assets/login/check-verification.svg";
 
-export default function PhoneVerification() {
+export default function EmailVerification() {
   const navigate = useNavigate();
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [showCodeInput, setShowCodeInput] = useState(false);
-  const [isPhoneFocused, setIsPhoneFocused] = useState(false);
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isCodeSending, setIsCodeSending] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isCodeFocused, setIsCodeFocused] = useState(false);
@@ -34,13 +34,11 @@ export default function PhoneVerification() {
     return () => clearInterval(interval);
   }, [timeRemaining]);
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ""); // 숫자만 허용
-    if (value.length <= 11) {
-      setPhoneNumber(value);
-      if (isVerified) {
-        setIsVerified(false);
-      }
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (isVerified) {
+      setIsVerified(false);
     }
   };
 
@@ -55,7 +53,7 @@ export default function PhoneVerification() {
   };
 
   const handleSendCode = () => {
-    if (phoneNumber.length >= 10 && !isCodeSending) {
+    if (/.+@.+/.test(email) && !isCodeSending) {
       setIsCodeSending(true);
       setShowCodeInput(true);
       setTimeRemaining(300); // 5분(300초) 제한 시간 시작
@@ -66,7 +64,7 @@ export default function PhoneVerification() {
   };
 
   const handleClearPhone = () => {
-    setPhoneNumber("");
+    setEmail("");
   };
 
   const handleClearCode = () => {
@@ -74,7 +72,7 @@ export default function PhoneVerification() {
   };
 
   const handleVerify = () => {
-    if (phoneNumber && verificationCode) {
+    if (email && verificationCode) {
       // TODO: 실제 인증 로직 (서버 API 호출)
       // 임시로 "123456"이 정답이라고 가정
       const correctCode = "123456";
@@ -108,7 +106,7 @@ export default function PhoneVerification() {
         {/* 제목 */}
         <div>
           <p className="text-zinc-900 text-xl font-semibold font-['Pretendard'] leading-7">
-            휴대폰 번호를
+            이메일 주소를
           </p>
           <p className="text-zinc-900 text-xl font-semibold font-['Pretendard'] leading-7">
             입력해주세요.
@@ -116,27 +114,27 @@ export default function PhoneVerification() {
         </div>
 
         <div>
-          {/* 휴대폰 번호 입력 */}
+          {/* 이메일 입력 */}
           <div className="mb-6">
             <label className="text-neutral-500 text-sm font-medium font-['Pretendard'] block">
-              휴대폰 번호
+              이메일
             </label>
             <div
               className={`flex gap-2 border-b px-1 py-3 justify-between items-center transition ${
-                isPhoneFocused ? "border-rose-900" : "border-zinc-400"
+                isEmailFocused ? "border-rose-900" : "border-zinc-400"
               }`}
             >
               <div className="flex items-center flex-1 relative">
                 <input
-                  type="text"
-                  value={phoneNumber}
-                  onChange={handlePhoneChange}
-                  onFocus={() => setIsPhoneFocused(true)}
-                  onBlur={() => setIsPhoneFocused(false)}
-                  placeholder="휴대폰 번호를 입력해주세요."
+                  type="email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  onFocus={() => setIsEmailFocused(true)}
+                  onBlur={() => setIsEmailFocused(false)}
+                  placeholder="이메일을 입력해주세요."
                   className="w-full text-zinc-900 text-base font-medium placeholder:text-zinc-400 placeholder:text-base placeholder:font-medium font-['Pretendard'] focus:outline-none caret-rose-900"
                 />
-                {phoneNumber && (
+                {email && (
                   <button onClick={handleClearPhone} className="ml-2">
                     <img
                       src={cancelIcon}
@@ -148,11 +146,9 @@ export default function PhoneVerification() {
               </div>
               <button
                 onClick={handleSendCode}
-                disabled={
-                  phoneNumber.length < 10 || isCodeSending || isVerified
-                }
+                disabled={!/.+@.+/.test(email) || isCodeSending || isVerified}
                 className={`flex items-center gap-1 h-8 px-2 py-1 rounded text-sm font-medium font-['Pretendard'] transition ${
-                  phoneNumber.length >= 10 && !isCodeSending && !isVerified
+                  /.+@.+/.test(email) && !isCodeSending && !isVerified
                     ? "text-zinc-600"
                     : "text-zinc-300 cursor-default"
                 }`}
@@ -208,9 +204,9 @@ export default function PhoneVerification() {
                 </div>
                 <button
                   onClick={handleVerify}
-                  disabled={!phoneNumber || !verificationCode || isVerified}
+                  disabled={!email || !verificationCode || isVerified}
                   className={`flex items-center gap-1 h-8 px-2 py-1 rounded text-sm font-medium font-['Pretendard'] transition ${
-                    phoneNumber && verificationCode && !isVerified
+                    email && verificationCode && !isVerified
                       ? "text-zinc-600"
                       : "text-zinc-300 cursor-default"
                   }`}
