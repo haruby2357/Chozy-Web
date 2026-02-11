@@ -3,6 +3,8 @@ import Login from "../features/login/Login";
 import Terms from "../features/login/Terms";
 import ServiceTerms from "../features/login/ServiceTerms";
 import PrivacyPolicy from "../features/login/PrivacyPolicy";
+import VerificationMethod from "../features/login/VerificationMethod";
+import PhoneVerification from "../features/login/PhoneVerification";
 import Home from "../features/goodsPage/Home";
 import SearchEntry from "../features/goodsPage/SearchEntry";
 import SearchResult from "../features/goodsPage/SearchResult";
@@ -24,6 +26,11 @@ export default function AppRouter() {
       <Route path="/login/terms" element={<Terms />} />
       <Route path="/login/terms/service" element={<ServiceTerms />} />
       <Route path="/login/terms/privacy" element={<PrivacyPolicy />} />
+      <Route
+        path="/login/terms/verification"
+        element={<VerificationMethod />}
+      />
+      <Route path="/login/verification/phone" element={<PhoneVerification />} />
       <Route path="/" element={<Home />} />
 
       {/* 상품 검색 페이지 라우팅 */}

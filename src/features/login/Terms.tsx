@@ -14,8 +14,9 @@ export default function Terms() {
   const isAllAgreed = agreeTerms && agreePrivacy;
 
   const handleNext = () => {
-    // TODO: 회원가입 페이지로 이동
-    console.log("약관 동의 완료, 회원가입 진행");
+    if (isAllAgreed) {
+      navigate("/login/terms/verification");
+    }
   };
 
   return (
@@ -30,7 +31,7 @@ export default function Terms() {
 
       <div className="flex flex-col gap-25">
         {/* 제목 */}
-        <div className="pt-3">
+        <div>
           <p className="justify-start text-zinc-900 text-xl font-semibold font-['Pretendard'] leading-7">
             서비스 이용을 위해
           </p>
@@ -109,7 +110,7 @@ export default function Terms() {
             isValid={isAllAgreed}
             onSubmit={handleNext}
             label="다음"
-            className="relative w-full bottom-5"
+            className="relative w-full"
           />
         </div>
       </div>
