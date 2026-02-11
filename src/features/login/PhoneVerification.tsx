@@ -99,7 +99,7 @@ export default function PhoneVerification() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-[380px] bg-white">
+    <div className="flex flex-col h-full w-full bg-white relative">
       {/* 헤더 */}
       <DetailHeader title="" />
 
@@ -244,7 +244,7 @@ export default function PhoneVerification() {
       </div>
 
       {/* 하단 버튼 */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[380px] px-4">
+      <div className="absolute bottom-5 left-4 right-4">
         <Toast toast={toast} />
         <SubmitButton
           label="다음"

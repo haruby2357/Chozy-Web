@@ -2,7 +2,7 @@ import DetailHeader from "../../components/DetailHeader";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="flex flex-col h-screen w-[380px] bg-white">
+    <div className="flex flex-col h-full w-full bg-white">
       {/* 헤더 */}
       <DetailHeader title="개인정보 처리방침" />
 

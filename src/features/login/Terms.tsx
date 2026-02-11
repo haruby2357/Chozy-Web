@@ -20,7 +20,7 @@ export default function Terms() {
   };
 
   return (
-    <div className="flex flex-col h-screen px-4 w-[380px] bg-white">
+    <div className="flex flex-col h-full w-full px-4 bg-white relative">
       {/* 상단 바 */}
       <div className="flex flex-col h-12 justify-center">
         {/* 뒤로가기 버튼 */}
@@ -104,7 +104,7 @@ export default function Terms() {
           </div>
         </div>
 
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[348px]">
+        <div className="absolute bottom-5 left-4 right-4">
           {/* 다음 버튼 */}
           <SubmitButton
             isValid={isAllAgreed}

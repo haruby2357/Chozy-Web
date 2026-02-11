@@ -33,11 +33,11 @@ export default function Login() {
       return;
     }
     console.log("로그인:", { userId, password });
+    navigate("/");
   };
 
   const handleSignUp = () => {
-    // TODO: 회원가입 페이지로 이동
-    console.log("회원가입 페이지로 이동");
+    navigate("/login/terms");
   };
 
   const handleGuestAccess = () => {
@@ -45,7 +45,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-[380px] items-center justify-center bg-gradient-to-br from-gray-100 to-white px-4">
+    <div className="flex flex-col h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white px-4 relative">
       {/* 로고 및 제목 */}
       <div className="flex flex-col top-20 items-center justify-center gap-3 mb-25 text-center">
         <img src={logoIcon} className="w-32 h-12" />
@@ -126,28 +126,28 @@ export default function Login() {
             )}
           </div>
         </div>
+
+        <div className="flex flex-col w-full text-center gap-3">
+          {/* 로그인 버튼 */}
+          <button
+            type="submit"
+            className={`mt-10 h-12 flex justify-center items-center rounded text-white text-base font-medium font-['Pretendard'] transition-all 
+      ${isFormValid ? "bg-rose-900 hover:bg-rose-800" : "bg-zinc-300 cursor-not-allowed"}`}
+            disabled={!isFormValid}
+          >
+            로그인
+          </button>
+
+          {/* 회원가입 버튼 */}
+          <button
+            type="button"
+            onClick={handleSignUp}
+            className="h-12 px-4 py-2.5 bg-stone-50 rounded flex justify-center items-center text-zinc-600 text-base font-medium font-['Pretendard']"
+          >
+            회원가입
+          </button>
+        </div>
       </form>
-
-      <div className="flex flex-col w-full text-center gap-3">
-        {/* 로그인 버튼 */}
-        <button
-          type="submit"
-          className={`mt-10 h-12 flex justify-center items-center rounded text-white text-base font-medium font-['Pretendard'] transition-all 
-    ${isFormValid ? "bg-rose-900 hover:bg-rose-800" : "bg-zinc-300 cursor-not-allowed"}`}
-          disabled={!isFormValid}
-        >
-          로그인
-        </button>
-
-        {/* 회원가입 버튼 */}
-        <button
-          type="button"
-          onClick={handleSignUp}
-          className="h-12 px-4 py-2.5 bg-stone-50 rounded flex justify-center items-center text-zinc-600 text-base font-medium font-['Pretendard']"
-        >
-          회원가입
-        </button>
-      </div>
 
       {/* 비회원 메시지 */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex text-center">
@@ -162,7 +162,7 @@ export default function Login() {
 
       {/* 토스트 메시지 */}
       {toast.visible && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[358px] h-12 p-4 bg-neutral-500 rounded text-white text-base font-medium font-['Pretendard'] flex items-center">
+        <div className="absolute bottom-10 left-4 right-4 h-12 p-4 bg-neutral-500 rounded text-white text-base font-medium font-['Pretendard'] flex items-center">
           {toast.message}
         </div>
       )}

@@ -2,7 +2,7 @@ import DetailHeader from "../../components/DetailHeader";
 
 export default function ServiceTerms() {
   return (
-    <div className="flex flex-col h-screen w-[380px] bg-white">
+    <div className="flex flex-col h-full w-full bg-white">
       {/* 헤더 */}
       <DetailHeader title="서비스 이용약관" />
 
