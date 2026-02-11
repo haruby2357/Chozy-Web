@@ -104,7 +104,7 @@ export default function Nickname() {
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[380px] px-4">
         <SubmitButton
           label="완료하기"
-          onSubmit={() => navigate("/")}
+          onSubmit={() => navigate("/login/complete")}
           isValid={isFormValid}
           className="relative w-full"
         />

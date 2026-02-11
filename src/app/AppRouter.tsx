@@ -8,6 +8,7 @@ import PhoneVerification from "../features/login/PhoneVerification";
 import EmailVerification from "../features/login/EmailVerification";
 import SignUp from "../features/login/SignUp";
 import Nickname from "../features/login/Nickname";
+import SignUpComplete from "../features/login/SignUpComplete";
 import Home from "../features/goodsPage/Home";
 import SearchEntry from "../features/goodsPage/SearchEntry";
 import SearchResult from "../features/goodsPage/SearchResult";
@@ -38,6 +39,7 @@ export default function AppRouter() {
       <Route path="/login/verification/email" element={<EmailVerification />} />
       <Route path="/login/signup" element={<SignUp />} />
       <Route path="/login/nickname" element={<Nickname />} />
+      <Route path="/login/complete" element={<SignUpComplete />} />
 
       {/* 홈 페이지 라우팅 */}
       <Route path="/" element={<Home />} />
