@@ -7,7 +7,7 @@ import goodOff from "../../../assets/community/good-off.svg";
 import badOn from "../../../assets/community/bad-on.svg";
 import badOff from "../../../assets/community/bad-off.svg";
 
-import type { CommentItem } from "../PostDetail";
+import type { CommentItem } from "../types";
 
 function formatCommentDate(iso: string) {
   const date = new Date(iso);

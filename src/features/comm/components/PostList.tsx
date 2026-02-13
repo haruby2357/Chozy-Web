@@ -11,6 +11,7 @@ import bookmarkOn from "../../../assets/community/bookmark-on.svg";
 import bookmarkOff from "../../../assets/community/bookmark-off.svg";
 import share from "../../../assets/community/repost.svg";
 import ShareBottomSheet from "./ShareBottomSheet";
+import load from "../../../assets/community/loading.svg";
 
 type Tab = "RECOMMEND" | "FOLLOWING";
 type ContentType = "ALL" | "POST" | "REVIEW";
@@ -138,7 +139,7 @@ export default function PostList({ tab, contentType }: PostProps) {
     setShareUrl(url);
     setShareOpen(true);
   };
-  
+
   useEffect(() => {
     const run = async () => {
       try {
@@ -238,9 +239,8 @@ export default function PostList({ tab, contentType }: PostProps) {
   if (!loading && filteredItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-45">
-        <div className="w-25 h-25 bg-[#D9D9D9]" />
-
-        <p className="mt-10 text-[#787878] text-[16px] font-medium text-center leading-normal whitespace-pre-line">
+        <img src={load} alt="로딩중" />
+        <p className="mt-6 text-[#787878] text-[16px] font-medium text-center leading-normal whitespace-pre-line">
           {tab === "FOLLOWING"
             ? "팔로우 중인 친구가 없어요.\n마음에 드는 이웃을 찾아보세요:)"
             : "아직 게시글이 없어요.\n첫 글을 작성해보세요:)"}

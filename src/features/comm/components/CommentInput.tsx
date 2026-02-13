@@ -1,4 +1,4 @@
-import camera from "../../../assets/community/camera.svg";
+import send from "../../../assets/community/send.svg";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type CommentInputProps = {
@@ -401,7 +401,7 @@ export default function CommentInput({
           </div>
 
           <button type="button">
-            <img src={camera} alt="사진첨부" />
+            <img src={send} alt="전송" />
           </button>
         </div>
       </div>
