@@ -1077,64 +1077,6 @@ type CommentReactionState = {
   dislikes: number;
 };
 
-// commentId -> 상태 저장
-const commentReactionStateById = new Map<number, CommentReactionState>();
-
-const getCommentState = (
-  commentId: number,
-  seedFrom?: { reaction: Reaction; likes: number; dislikes: number },
-) => {
-  if (!commentReactionStateById.has(commentId)) {
-    if (seedFrom) commentReactionStateById.set(commentId, { ...seedFrom });
-    else
-      commentReactionStateById.set(commentId, {
-        reaction: "NONE",
-        likes: 0,
-        dislikes: 0,
-      });
-  }
-  return commentReactionStateById.get(commentId)!;
-};
-
-const applyCommentToggle = (
-  commentId: number,
-  like: boolean,
-  seedFrom?: { reaction: Reaction; likes: number; dislikes: number },
-) => {
-  const s = getCommentState(commentId, seedFrom);
-
-  if (like) {
-    // like:true
-    if (s.reaction === "LIKE") {
-      s.reaction = "NONE";
-      s.likes = Math.max(0, s.likes - 1);
-    } else if (s.reaction === "DISLIKE") {
-      s.reaction = "LIKE";
-      s.dislikes = Math.max(0, s.dislikes - 1);
-      s.likes += 1;
-    } else {
-      s.reaction = "LIKE";
-      s.likes += 1;
-    }
-  } else {
-    // like:false (싫어요)
-    if (s.reaction === "DISLIKE") {
-      s.reaction = "NONE";
-      s.dislikes = Math.max(0, s.dislikes - 1);
-    } else if (s.reaction === "LIKE") {
-      s.reaction = "DISLIKE";
-      s.likes = Math.max(0, s.likes - 1);
-      s.dislikes += 1;
-    } else {
-      s.reaction = "DISLIKE";
-      s.dislikes += 1;
-    }
-  }
-
-  commentReactionStateById.set(commentId, s);
-  return s;
-};
-
 handlers.push(
   http.post(
     "/community/comments/:commentId/like",
