@@ -23,6 +23,7 @@ import LikePost from "../features/myPage/components/setting/LikePost";
 import BlockedAccounts from "../features/myPage/components/setting/BlockedAccounts";
 import WithdrawAccount from "../features/myPage/components/setting/WithdrawAccount";
 import WithdrawComplete from "../features/myPage/components/setting/WithdrawComplete";
+import FavoritePage from "../features/favorites/FavoritePage";
 
 export default function AppRouter() {
   return (
@@ -55,8 +56,10 @@ export default function AppRouter() {
       <Route path="/community/post-write" element={<PostWrite />} />
       <Route path="/review-write" element={<ReviewWrite />} />
 
+      {/* 찜 페이지 라우팅 */}
+      <Route path="/heart" element={<FavoritePage />} />
+
       {/* 개인 페이지 라우팅 */}
-      <Route path="/heart" element={<Home />} />
       <Route path="/mypage" element={<MyMain />} />
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/mypage/setting" element={<Setting />} />
