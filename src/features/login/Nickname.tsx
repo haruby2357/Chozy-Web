@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { completeOnboarding } from "../../api/auth";
 import DetailHeader from "../../components/DetailHeader";
 import SubmitButton from "../../components/SubmitButton";
 import cancelIcon from "../../assets/all/cancel.svg";
@@ -40,6 +41,27 @@ export default function Nickname() {
   };
 
   const isFormValid = nickname.length > 0 && nicknameErrors.length === 0;
+
+  const handleComplete = async () => {
+    if (!isFormValid) return;
+
+    try {
+      // 서버에 닉네임 저장 요청 (온보딩 API 호출)
+      const response = await completeOnboarding(nickname);
+
+      if (response.isSuccess) {
+        // 성공 시 회원가입 완료 페이지로 이동
+        navigate("/login/complete");
+      }
+    } catch (error: any) {
+      // 닉네임 중복 등 에러 처리
+      if (error.response?.data?.code === 4094) {
+        alert("이미 사용 중인 닉네임이에요.");
+      } else {
+        alert("문제가 발생했습니다. 다시 시도해주세요.");
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-white relative">
@@ -104,7 +126,7 @@ export default function Nickname() {
       <div className="absolute bottom-5 left-4 right-4">
         <SubmitButton
           label="완료하기"
-          onSubmit={() => navigate("/login/complete")}
+          onSubmit={handleComplete}
           isValid={isFormValid}
           className="relative w-full"
         />

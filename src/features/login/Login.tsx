@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import logoIcon from "../../assets/login/logo.svg";
@@ -53,38 +53,9 @@ export default function Login() {
     navigate("/");
   };
 
-  // 카카오 로그인 초기화 및 SDK 로드
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://developers.kakao.com/sdk/js/kakao.min.js";
-    script.async = true;
-    script.onload = () => {
-      // 카카오 SDK 초기화 (REST API 키 필요)
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        window.Kakao.init(import.meta.env.VITE_KAKAO_APP_ID);
-      }
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
-
   const handleKakaoLogin = () => {
-    if (window.Kakao) {
-      window.Kakao.Auth.login({
-        success: (authObj: any) => {
-          console.log("카카오 로그인 성공:", authObj);
-          // 로그인 성공 시 온보딩 페이지로 이동
-          navigate("/onboarding");
-        },
-        fail: (err: any) => {
-          console.error("카카오 로그인 실패:", err);
-          showToast("카카오 로그인에 실패했어요.");
-        },
-      });
-    }
+    const KAKAO_AUTH_URL = "전체_URL"; // 백엔드에서 URL 받으면 바로 수정 예정!
+    window.location.href = KAKAO_AUTH_URL;
   };
 
   return (
