@@ -24,7 +24,7 @@ export default function Onboarding() {
     if (currentStep < ONBOARDING_DATA.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      navigate("/home");
+      navigate("/");
     }
   };
 
