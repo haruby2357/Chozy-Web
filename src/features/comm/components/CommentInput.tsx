@@ -1,9 +1,12 @@
-import camera from "../../../assets/community/camera.svg";
+import send from "../../../assets/community/send.svg";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type CommentInputProps = {
   profileImg: string;
   onSubmit: (text: string) => void;
+  replyTo?: string | null;
+  onClearReply?: () => void;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 };
 
 type ApiResponse<T> = {
@@ -147,6 +150,8 @@ function renderSuggestionLoginId(loginId: string, query: string) {
 export default function CommentInput({
   profileImg,
   onSubmit,
+  replyTo,
+  onClearReply,
 }: CommentInputProps) {
   const [text, setText] = useState("");
   const [suggestions, setSuggestions] = useState<MentionUser[]>([]);
@@ -276,10 +281,28 @@ export default function CommentInput({
       {openSuggest && (
         <div
           className="absolute inset-0 bg-black/40 z-[40]"
-          onMouseDown={() => {
-            setOpenSuggest(false);
-          }}
+          onMouseDown={() => setOpenSuggest(false)}
         />
+      )}
+
+      {/* 답글 대상 표시 */}
+      {replyTo && (
+        <div>
+          <div className="flex items-center justify-between bg-[#F9F9F9] px-4 py-3">
+            <div className="text-[14px] text-[#787878]">
+              <span className="font-medium text-[#787878]">@{replyTo}</span>
+              <span> 님에게 답글</span>
+            </div>
+
+            <button
+              type="button"
+              className="text-[14px] text-[#B5B5B5]"
+              onClick={() => onClearReply?.()}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       )}
 
       {/* 연관 프로필 */}
@@ -316,7 +339,6 @@ export default function CommentInput({
                 alt={u.loginId}
                 className="w-8 h-8 rounded-full object-cover shrink-0"
               />
-
               {renderSuggestionLoginId(u.loginId, debouncedQuery)}
             </button>
           ))}
@@ -370,10 +392,7 @@ export default function CommentInput({
                   setSuggestions([]);
                 }
               }}
-              onBlur={() => {
-                // 클릭 선택 가능하게 살짝 지연
-                setTimeout(() => setOpenSuggest(false), 150);
-              }}
+              onBlur={() => setTimeout(() => setOpenSuggest(false), 150)}
               onFocus={() => {
                 if (suggestions.length > 0 && activeMention?.query)
                   setOpenSuggest(true);
@@ -382,7 +401,7 @@ export default function CommentInput({
           </div>
 
           <button type="button">
-            <img src={camera} alt="사진첨부" />
+            <img src={send} alt="전송" />
           </button>
         </div>
       </div>

@@ -455,6 +455,50 @@ type FeedItem =
   | (FeedItemBase & { type: "POST"; content: PostContent })
   | (FeedItemBase & { type: "REVIEW"; content: ReviewContent });
 
+const commentReactionMap = new Map<number, CommentReactionState>();
+
+function seedCommentReaction(commentId: number, seeded: CommentReactionState) {
+  if (!commentReactionMap.has(commentId)) {
+    commentReactionMap.set(commentId, { ...seeded });
+  }
+}
+
+function toggleCommentReaction(
+  current: CommentReactionState,
+  like: boolean,
+): CommentReactionState {
+  const prev = current.reaction;
+  const next: Reaction = like ? "LIKE" : "DISLIKE";
+
+  let likes = current.likes;
+  let dislikes = current.dislikes;
+  let reaction: Reaction = prev;
+
+  if (prev === "NONE") {
+    // NONE -> LIKE/DISLIKE
+    reaction = next;
+    if (next === "LIKE") likes += 1;
+    else dislikes += 1;
+  } else if (prev === next) {
+    // LIKE -> NONE or DISLIKE -> NONE
+    reaction = "NONE";
+    if (next === "LIKE") likes = Math.max(0, likes - 1);
+    else dislikes = Math.max(0, dislikes - 1);
+  } else {
+    // LIKE <-> DISLIKE switch
+    reaction = next;
+    if (next === "LIKE") {
+      dislikes = Math.max(0, dislikes - 1);
+      likes += 1;
+    } else {
+      likes = Math.max(0, likes - 1);
+      dislikes += 1;
+    }
+  }
+
+  return { reaction, likes, dislikes };
+}
+
 const fail = () => ({
   isSuccess: true,
   code: 4000,
@@ -623,38 +667,38 @@ handlers.push(
 );
 
 // 커뮤니티 게시글 상세보기
-type PostContentDetail = {
-  text: string;
-  contentImgs: string[];
-  hashTags: string[]; // "#a #b ..."
-};
+// type PostContentDetail = {
+//   text: string;
+//   contentImgs: string[];
+//   hashTags: string[]; // "#a #b ..."
+// };
 
-type ReviewContentDetail = {
-  vendor: string;
-  title: string;
-  rating: number;
-  text: string;
-  contentImgs: string[];
-  hashTags: string[];
-};
+// type ReviewContentDetail = {
+//   vendor: string;
+//   title: string;
+//   rating: number;
+//   text: string;
+//   contentImgs: string[];
+//   hashTags: string[];
+// };
 
-type FeedDetail =
-  | {
-      feedId: number;
-      type: "POST";
-      user: FeedUser;
-      content: PostContentDetail;
-      counts: FeedCounts;
-      myState: FeedMyState;
-    }
-  | {
-      feedId: number;
-      type: "REVIEW";
-      user: FeedUser;
-      content: ReviewContentDetail;
-      counts: FeedCounts;
-      myState: FeedMyState;
-    };
+// type FeedDetail =
+//   | {
+//       feedId: number;
+//       type: "POST";
+//       user: FeedUser;
+//       content: PostContentDetail;
+//       counts: FeedCounts;
+//       myState: FeedMyState;
+//     }
+//   | {
+//       feedId: number;
+//       type: "REVIEW";
+//       user: FeedUser;
+//       content: ReviewContentDetail;
+//       counts: FeedCounts;
+//       myState: FeedMyState;
+//     };
 
 // type ApiResponse<T> = {
 //   isSuccess: boolean;
@@ -664,176 +708,149 @@ type FeedDetail =
 //   result: T;
 // };
 
-type CommentItem = {
-  commentId: number;
-  user: FeedUser;
-  quote: string; // "아이디" 같은 값
-  content: string;
-  counts: FeedCounts;
-  myState: FeedMyState;
-  createdAt: string;
-  // 대댓글
-  comment?: CommentItem[];
-};
+// type CommentItem = {
+//   commentId: number;
+//   user: FeedUser;
+//   quote: string; // "아이디" 같은 값
+//   content: string;
+//   counts: FeedCounts;
+//   myState: FeedMyState;
+//   createdAt: string;
+//   // 대댓글
+//   comment?: CommentItem[];
+// };
 
-type FeedDetailResult = {
-  feed: FeedDetail;
-  comments: CommentItem[];
-};
+// type FeedDetailResult = {
+//   feed: FeedDetail;
+//   comments: CommentItem[];
+// };
 
-// key = feedId
-const FEED_DETAIL_MAP: Record<number, FeedDetailResult> = {
+const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
   1: {
     feed: {
       feedId: 1,
-      type: "POST",
+      kind: "ORIGINAL",
+      contentType: "REVIEW",
+      isMine: true,
+      createdAt: "2025-02-13T05:46:46.8616101",
       user: {
-        profileImg: "https://cdn.example.com/users/12/profile.jpg",
-        userName: "이수아",
+        profileImageUrl: null,
+        name: "이수아",
         userId: "KUIT_PM",
       },
-      content: {
-        text: "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
-        contentImgs: [
-          "/src/assets/goodsPage/examProd.svg",
-          "/src/assets/goodsPage/examProd.svg",
-          "/src/assets/goodsPage/examProd.svg",
-        ],
-        hashTags: [
-          "#제품명이미지",
-          "#제품명이미지",
-          "#제품명이미지",
-          "#제품명이미지",
-        ],
-      },
-      counts: { comments: 67, likes: 67, dislikes: 67, quotes: 67 },
-      myState: { reaction: "LIKE", isbookmarked: true, isreposted: true },
-    },
-    comments: [],
-  },
-  2: {
-    feed: {
-      feedId: 2,
-      type: "REVIEW",
-      user: {
-        profileImg: "https://cdn.example.com/users/12/profile.jpg",
-        userName: "이수아",
-        userId: "KUIT_PM",
-      },
-      content: {
+      contents: {
         vendor: "알리",
+        productUrl: "https://www.myshop.com/products/345",
         title: "Toocki 67W GaN USB C 충전기",
         rating: 4.0,
-        text: "노트북이랑 휴대폰을 같이 충전할 수 있는 충전기를 찾다가 구매했어요. 여러 기기를 동시에 연결해도 발열이 심하지 않고 충전 속도도 안정적인 편이라 만족하면서 쓰고 있습니다. 크기가 생각보다 작아서 가방에 넣고 다니기에도 부담 없고, 콘센트에 꽂았을 때도 흔들림이 크지 않아서 좋았어요. 케이블을 여러 개 챙기지 않아도 된다는 점이 특히 편리했고, 디자인도 과하지 않아서 어디에 두어도 잘 어울립니다. 아직 오래 사용한 건 아니지만 지금까지는 전반적으로 만족스러운 제품이에요. \n\n노트북이랑 휴대폰을 같이 충전할 수 있는 충전기를 찾다가 구매했어요. 여러 기기를 동시에 연결해도 발열이 심하지 않고 충전 속도도 안정적인 편이라 만족하면서 쓰고 있습니다. 크기가 생각보다 작아서 가방에 넣고 다니기에도 부담 없고, 콘센트에 꽂았을 때도 흔들림이 크지 않아서 좋았어요.",
-        contentImgs: [
-          "/src/assets/goodsPage/examProd.svg",
-          "/src/assets/goodsPage/examProd.svg",
-          "/src/assets/goodsPage/examProd.svg",
+        content:
+          "자력도 짱짱하고 디자인도 깔끔합니다. 로켓배송이라 다음 날 받아서 설치했네요 가격은 좀 있지만 제품은 좋아요~ 구매 추천합니다.",
+        feedImages: [
+          { imageUrl: "1.jpg", sortOrder: 1, contentType: "image/jpeg" },
+          { imageUrl: "2.png", sortOrder: 2, contentType: "image/png" },
         ],
-        hashTags: [
-          "#제품명이미지",
-          "#제품명이미지",
-          "#제품명이미지",
-          "#제품명이미지",
-        ],
+        hashTags: ["#카페", "#에낭", "#두바이쿠키"],
       },
-      counts: { comments: 67, likes: 67, dislikes: 67, quotes: 67 },
-      myState: { reaction: "LIKE", isbookmarked: true, isreposted: true },
+      counts: {
+        viewCount: 100,
+        commentCount: 67,
+        likeCount: 67,
+        dislikeCount: 67,
+        quoteCount: 67,
+      },
+      myState: {
+        reactionType: "LIKE", // LIKE | DISLIKE | NONE
+        isBookmarked: true,
+        isReposted: true,
+        isFollowing: true,
+      },
     },
     comments: [
       {
         commentId: 1,
         user: {
-          profileImg: "https://cdn.example.com/users/12/profile.jpg",
-          userName: "이수아",
+          profileImageUrl: null,
+          name: "이수아",
           userId: "KUIT_PM",
         },
-        quote: "아이디",
+        mentionedUserName: "아이디",
         content: "감사합니다~~",
-        counts: { comments: 0, likes: 1, dislikes: 0, quotes: 0 },
-        myState: { reaction: "LIKE", isbookmarked: false, isreposted: false },
+        counts: {
+          likeCount: 67,
+          dislikeCount: 67,
+          replyCount: 0,
+        },
+        reactionType: "LIKE",
         createdAt: "2025-02-19T23:35:34.861172",
+        commentReflies: [],
       },
       {
         commentId: 2,
         user: {
-          profileImg: "/src/assets/goodsPage/examProd.svg",
-          userName: "이수아",
+          profileImageUrl: null,
+          name: "이수아",
           userId: "KUIT_PM",
         },
-        quote: "아이디",
+        mentionedUserName: "아이디",
         content: "감사합니다~~",
-        counts: { comments: 2, likes: 0, dislikes: 0, quotes: 0 },
-        myState: { reaction: "NONE", isbookmarked: false, isreposted: false },
-        createdAt: "2026-01-13T23:35:34.861172",
-        comment: [
+        counts: {
+          likeCount: 67,
+          dislikeCount: 67,
+          replyCount: 2,
+        },
+        reactionType: "LIKE",
+        createdAt: "2025-02-19T23:35:34.861172",
+        commentReflies: [
           {
-            commentId: 3,
+            commentReflyId: 3,
             user: {
-              profileImg: "/src/assets/goodsPage/examProd.svg",
-              userName: "이수아",
+              profileImageUrl: null,
+              name: "이수아",
               userId: "KUIT_PM",
             },
-            quote: "아이디",
-            content: "대댓글 1",
-            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
-            myState: {
-              reaction: "NONE",
-              isbookmarked: false,
-              isreposted: false,
+            mentionedUserName: "아이디",
+            content: "감사합니다~~",
+            counts: {
+              likeCount: 67,
+              dislikeCount: 67,
+              replyCount: 0,
             },
-            createdAt: "2026-01-16T23:35:34.861172",
+            reactionType: "LIKE",
+            createdAt: "2025-02-19T23:35:34.861172",
           },
           {
-            commentId: 4,
+            commentReflyId: 4,
             user: {
-              profileImg: "/src/assets/goodsPage/examProd.svg",
-              userName: "이수아",
+              profileImageUrl: null,
+              name: "이수아",
               userId: "KUIT_PM",
             },
-            quote: "아이디",
-            content: "대댓글 2",
-            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
-            myState: {
-              reaction: "NONE",
-              isbookmarked: false,
-              isreposted: false,
+            mentionedUserName: "아이디",
+            content: "감사합니다~~",
+            counts: {
+              likeCount: 67,
+              dislikeCount: 67,
+              replyCount: 0,
             },
-            createdAt: "2026-01-16T23:35:34.861172",
+            reactionType: "LIKE",
+            createdAt: "2025-02-19T23:35:34.861172",
           },
           {
-            commentId: 5,
+            commentReflyId: 5,
             user: {
-              profileImg: "/src/assets/goodsPage/examProd.svg",
-              userName: "이수아",
+              profileImageUrl: null,
+              name: "이수아",
               userId: "KUIT_PM",
             },
-            quote: "아이디",
-            content: "대댓글 3",
-            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
-            myState: {
-              reaction: "NONE",
-              isbookmarked: false,
-              isreposted: false,
+            mentionedUserName: "아이디",
+            content: "감사합니다~~",
+            counts: {
+              likeCount: 67,
+              dislikeCount: 67,
+              replyCount: 0,
             },
-            createdAt: "2026-01-16T23:35:34.861172",
-          },
-          {
-            commentId: 6,
-            user: {
-              profileImg: "/src/assets/goodsPage/examProd.svg",
-              userName: "이수아",
-              userId: "KUIT_PM",
-            },
-            quote: "아이디",
-            content: "대댓글 4",
-            counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
-            myState: {
-              reaction: "NONE",
-              isbookmarked: false,
-              isreposted: false,
-            },
-            createdAt: "2026-01-16T23:35:34.861172",
+            reactionType: "LIKE",
+            createdAt: "2025-02-19T23:35:34.861172",
           },
         ],
       },
@@ -844,9 +861,9 @@ const FEED_DETAIL_MAP: Record<number, FeedDetailResult> = {
 handlers.push(
   http.get("/community/feeds/:feedId/detail", ({ params }) => {
     const id = Number(params.feedId);
-    const data = FEED_DETAIL_MAP[id];
+    const result = FEED_DETAIL_SPEC_MAP[id];
 
-    if (!data) {
+    if (!result) {
       return HttpResponse.json(
         {
           isSuccess: true,
@@ -859,59 +876,34 @@ handlers.push(
       );
     }
 
-    const seeded = {
-      reaction: data.feed.myState.reaction,
-      likes: data.feed.counts.likes,
-      dislikes: data.feed.counts.dislikes,
-    };
-    const state = getReactionState(id, seeded);
-    const bookmarked = getBookmark(id, data.feed.myState.isbookmarked);
-
-    const patched: FeedDetailResult = {
-      ...data,
-      feed: {
-        ...data.feed,
-        counts: {
-          ...data.feed.counts,
-          likes: state.likes,
-          dislikes: state.dislikes,
-        },
-        myState: {
-          ...data.feed.myState,
-          reaction: state.reaction,
-          isbookmarked: bookmarked,
-        },
-      },
-    };
-
-    const patchCommentsWithState = (list: CommentItem[]): CommentItem[] => {
-      return (list ?? []).map((c) => {
-        const seeded = {
-          reaction: c.myState.reaction,
-          likes: c.counts.likes,
-          dislikes: c.counts.dislikes,
-        };
-        const s = getCommentState(c.commentId, seeded);
-
-        return {
-          ...c,
-          counts: {
-            ...c.counts,
-            likes: s.likes,
-            dislikes: s.dislikes,
-          },
-          myState: {
-            ...c.myState,
-            reaction: s.reaction,
-          },
-          comment: c.comment ? patchCommentsWithState(c.comment) : c.comment,
-        };
+    for (const c of result.comments ?? []) {
+      seedCommentReaction(c.commentId, {
+        reaction: c.reactionType,
+        likes: c.counts.likeCount,
+        dislikes: c.counts.dislikeCount,
       });
-    };
 
-    return HttpResponse.json(ok(patched), { status: 200 });
+      for (const r of c.commentReflies ?? []) {
+        seedCommentReaction(r.commentReflyId, {
+          reaction: r.reactionType,
+          likes: r.counts.likeCount,
+          dislikes: r.counts.dislikeCount,
+        });
+      }
+    }
+
+    return HttpResponse.json(ok(result), { status: 200 });
   }),
 );
+
+// =======================
+// 추후에 MSW 연동 끊고 실 서버 연결할 경우 활성화
+// =======================
+// handlers.push(
+//   http.get("/community/feeds/:feedId/detail", () => {
+//     return passthrough();
+//   }),
+// );
 
 // 팔로우 요청/취소
 // src/mocks/handlers.ts
@@ -1023,7 +1015,7 @@ const applyToggle = (
 handlers.push(
   http.post("/community/feeds/:feedId/like", async ({ params, request }) => {
     const feedId = Number(params.feedId);
-    const data = FEED_DETAIL_MAP[feedId];
+    const data = FEED_DETAIL_SPEC_MAP[feedId];
 
     if (!data) {
       return HttpResponse.json(
@@ -1085,94 +1077,28 @@ type CommentReactionState = {
   dislikes: number;
 };
 
-// commentId -> 상태 저장
-const commentReactionStateById = new Map<number, CommentReactionState>();
-
-const getCommentState = (
-  commentId: number,
-  seedFrom?: { reaction: Reaction; likes: number; dislikes: number },
-) => {
-  if (!commentReactionStateById.has(commentId)) {
-    if (seedFrom) commentReactionStateById.set(commentId, { ...seedFrom });
-    else
-      commentReactionStateById.set(commentId, {
-        reaction: "NONE",
-        likes: 0,
-        dislikes: 0,
-      });
-  }
-  return commentReactionStateById.get(commentId)!;
-};
-
-const applyCommentToggle = (
-  commentId: number,
-  like: boolean,
-  seedFrom?: { reaction: Reaction; likes: number; dislikes: number },
-) => {
-  const s = getCommentState(commentId, seedFrom);
-
-  if (like) {
-    // like:true
-    if (s.reaction === "LIKE") {
-      s.reaction = "NONE";
-      s.likes = Math.max(0, s.likes - 1);
-    } else if (s.reaction === "DISLIKE") {
-      s.reaction = "LIKE";
-      s.dislikes = Math.max(0, s.dislikes - 1);
-      s.likes += 1;
-    } else {
-      s.reaction = "LIKE";
-      s.likes += 1;
-    }
-  } else {
-    // like:false (싫어요)
-    if (s.reaction === "DISLIKE") {
-      s.reaction = "NONE";
-      s.dislikes = Math.max(0, s.dislikes - 1);
-    } else if (s.reaction === "LIKE") {
-      s.reaction = "DISLIKE";
-      s.likes = Math.max(0, s.likes - 1);
-      s.dislikes += 1;
-    } else {
-      s.reaction = "DISLIKE";
-      s.dislikes += 1;
-    }
-  }
-
-  commentReactionStateById.set(commentId, s);
-  return s;
-};
-
 handlers.push(
   http.post(
     "/community/comments/:commentId/like",
     async ({ params, request }) => {
       const commentId = Number(params.commentId);
-      const body = (await request.json()) as { like?: boolean };
+      const body = (await request.json()) as { like: boolean };
 
-      if (typeof body.like !== "boolean") {
-        return HttpResponse.json(
-          {
-            isSuccess: true,
-            code: 4000,
-            message: "요청에 실패했습니다. (like 값이 필요합니다)",
-            timestamp: new Date().toISOString(),
-            result: null,
-          },
-          { status: 400 },
-        );
-      }
+      seedCommentReaction(commentId, {
+        reaction: "NONE",
+        likes: 0,
+        dislikes: 0,
+      });
 
-      // seed: 현재 FEED_DETAIL_MAP에 있는 댓글값에서 가져오고 싶다면 찾아서 넣어줄 수도 있는데,
-      // 여기선 상태가 없으면 기본값으로 시작하게 두고,
-      // GET detail에서 seed를 제대로 주입하므로 충분히 자연스럽게 동작함.
-      const next = applyCommentToggle(commentId, body.like);
+      const current = commentReactionMap.get(commentId)!;
+      const nextState = toggleCommentReaction(current, body.like);
+      commentReactionMap.set(commentId, nextState);
 
       return HttpResponse.json(
         ok({
           commentId,
-          reaction: next.reaction,
-          counts: { likes: next.likes, dislikes: next.dislikes },
+          reaction: nextState.reaction,
+          counts: { likes: nextState.likes, dislikes: nextState.dislikes },
         }),
         { status: 200 },
       );
@@ -1259,7 +1185,7 @@ handlers.push(
       const postId = Math.floor(Math.random() * 100000);
 
       // FEED_DETAIL_MAP에 새로운 포스트 데이터 추가
-      FEED_DETAIL_MAP[postId] = {
+      FEED_DETAIL_SPEC_MAP[postId] = {
         feed: {
           feedId: postId,
           type: "POST",
