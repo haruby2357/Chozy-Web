@@ -856,7 +856,7 @@ const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
         nextRepliesCursor: null,
       },
       {
-        commentId: 2,
+        commentId: 6,
         parentCommentId: null,
         depth: 0,
         isMine: false,
@@ -878,8 +878,8 @@ const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
         updatedAt: "2025-02-19T23:35:34.861172",
         replies: [
           {
-            commentId: 3,
-            parentCommentId: 2,
+            commentId: 7,
+            parentCommentId: 6,
             depth: 1,
             isMine: true,
             user: {
@@ -900,8 +900,8 @@ const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
             replies: [],
           },
           {
-            commentId: 4,
-            parentCommentId: 2,
+            commentId: 8,
+            parentCommentId: 6,
             depth: 1,
             isMine: false,
             user: {
@@ -920,8 +920,8 @@ const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
             replies: [],
           },
           {
-            commentId: 5,
-            parentCommentId: 2,
+            commentId: 9,
+            parentCommentId: 6,
             depth: 1,
             isMine: false,
             user: {

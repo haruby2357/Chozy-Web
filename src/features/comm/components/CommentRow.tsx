@@ -149,7 +149,11 @@ export default function CommentRow({
   depth?: number;
   lastAvatarRef?: React.RefObject<HTMLImageElement | null>;
   onToggleReaction: (commentId: number, like: boolean) => void;
-  onReplyClick?: (loginId: string, parentCommentId: number) => void;
+  onReplyClick?: (
+    loginId: string,
+    parentCommentId: number,
+    showBar: boolean,
+  ) => void;
 }) {
   const isChild = depth > 0;
 
@@ -258,9 +262,12 @@ export default function CommentRow({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isChild) return;
+                  if (isChild) {
+                    onReplyClick?.(item.user.userId, item.commentId, true);
+                    return;
+                  }
 
-                  onReplyClick?.(item.user.userId, item.commentId);
+                  onReplyClick?.(item.user.userId, item.commentId, false);
                 }}
                 className="flex items-center gap-[3px] leading-none"
               >

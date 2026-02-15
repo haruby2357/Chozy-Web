@@ -150,7 +150,7 @@ export type ApiFeed = {
 export type ApiMention = {
   userId: string;
   name: string;
-  startIndex: number; // UTF-16 index
+  startIndex: number;
   length: number;
 };
 
@@ -219,4 +219,5 @@ export type BookmarkToggleResult = {
 export type ReplyTarget = null | {
   parentCommentId: number;
   loginId: string;
+  showBar: boolean;
 };

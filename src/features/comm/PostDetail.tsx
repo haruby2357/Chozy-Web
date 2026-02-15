@@ -196,6 +196,18 @@ export default function PostDetail() {
     setComments((prev) => [...prev, newItem]);
   };
 
+  const inputPlaceholder = replyTarget
+    ? `@${replyTarget.loginId}님에게 답글 남기기`
+    : "게시글에 댓글 남기기";
+
+  const focusInput = () =>
+    requestAnimationFrame(() => commentInputRef.current?.focus());
+
+  const handleClickPostComment = () => {
+    setReplyTarget(null);
+    focusInput();
+  };
+
   /** ---------------------------
    * 팔로우 토글
    * -------------------------- */
@@ -390,6 +402,7 @@ export default function PostDetail() {
             onToggleLike={() => handleToggleReaction(true)}
             onToggleDislike={() => handleToggleReaction(false)}
             onToggleBookmark={handleToggleBookmark}
+            onClickComment={handleClickPostComment}
           />
         </div>
 
@@ -397,8 +410,8 @@ export default function PostDetail() {
         <div
           className={
             comments.length === 0
-              ? "px-3 py-1 min-h-[200px] flex items-center justify-center"
-              : "px-3 py-1 min-h-[200px]"
+              ? "px-3 py-1 min-h-[200px] flex items-center justify-center bg-[#f9f9f9]"
+              : "px-3 py-1 min-h-[200px] bg-[#f9f9f9]"
           }
         >
           {comments.length === 0 ? (
@@ -414,11 +427,9 @@ export default function PostDetail() {
                   onToggleReaction={(commentId, like) =>
                     handleToggleCommentReaction(commentId, like)
                   }
-                  onReplyClick={(loginId, parentCommentId) => {
-                    setReplyTarget({ loginId, parentCommentId });
-                    requestAnimationFrame(() =>
-                      commentInputRef.current?.focus(),
-                    );
+                  onReplyClick={(loginId, parentCommentId, showBar) => {
+                    setReplyTarget({ loginId, parentCommentId, showBar });
+                    focusInput();
                   }}
                 />
               ))}
@@ -442,8 +453,9 @@ export default function PostDetail() {
       <CommentInput
         profileImg={feed.user.profileImg}
         onSubmit={handleAddComment}
-        replyTo={replyTarget?.loginId ?? null}
+        replyTo={replyTarget?.showBar ? replyTarget.loginId : null}
         onClearReply={() => setReplyTarget(null)}
+        placeholderText={inputPlaceholder}
         inputRef={commentInputRef}
       />
     </div>
