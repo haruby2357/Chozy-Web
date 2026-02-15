@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import type { ApiResponse, ApiFeedDetailResult } from "../features/comm/types";
 
 const ok = (result: unknown) => ({
   isSuccess: true,
@@ -728,15 +729,15 @@ handlers.push(
 const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
   1: {
     feed: {
-      feedId: 1,
+      feedId: 2,
       kind: "ORIGINAL",
       contentType: "REVIEW",
       isMine: true,
       createdAt: "2025-02-13T05:46:46.8616101",
       user: {
-        profileImageUrl: null,
         name: "이수아",
         userId: "KUIT_PM",
+        profileImageUrl: "https://cdn.example.com/users/12/profile.jpg",
       },
       contents: {
         vendor: "알리",
@@ -759,7 +760,7 @@ const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
         quoteCount: 67,
       },
       myState: {
-        reactionType: "LIKE", // LIKE | DISLIKE | NONE
+        reactionType: "LIKE",
         isBookmarked: true,
         isReposted: true,
         isFollowing: true,
@@ -768,95 +769,196 @@ const FEED_DETAIL_SPEC_MAP: Record<number, any> = {
     comments: [
       {
         commentId: 1,
+        parentCommentId: null,
+        depth: 0,
+        isMine: false,
         user: {
-          profileImageUrl: null,
-          name: "이수아",
-          userId: "KUIT_PM",
+          userId: "lylylylh",
+          name: "이윤희",
+          profileImageUrl: "https://cdn.example.com/users/12/profile.jpg",
         },
-        mentionedUserName: "아이디",
-        content: "감사합니다~~",
-        counts: {
-          likeCount: 67,
-          dislikeCount: 67,
-          replyCount: 0,
-        },
-        reactionType: "LIKE",
+        content: "충전기 받아서 며칠 사용해봤는데 만족스럽네요.",
+        replyTo: null,
+        mentions: [
+          { userId: "KUIT_PM", name: "이수아", startIndex: 0, length: 4 },
+          { userId: "lylylylh", name: "이윤희", startIndex: 12, length: 8 },
+        ],
+        counts: { likeCount: 67, dislikeCount: 67, replyCount: 67 },
+        myState: { reactionType: "LIKE" },
+        status: "ACTIVE",
         createdAt: "2025-02-19T23:35:34.861172",
-        commentReflies: [],
+        updatedAt: "2025-02-19T23:35:34.861172",
+        replies: [
+          {
+            commentId: 3,
+            parentCommentId: 1,
+            depth: 1,
+            isMine: true,
+            user: {
+              userId: "KUIT_PM",
+              name: "이수아",
+              profileImageUrl: "https://cdn.example.com/users/12/profile.jpg",
+            },
+            content: "@아이디 감사합니다~~",
+            replyTo: { userId: "USER_A", name: "아이디" },
+            mentions: [
+              { userId: "USER_A", name: "아이디", startIndex: 0, length: 4 },
+            ],
+            counts: { likeCount: 2, dislikeCount: 0, replyCount: 0 },
+            myState: { reactionType: "NONE" },
+            status: "ACTIVE",
+            createdAt: "2025-02-19T23:36:10.123456",
+            updatedAt: "2025-02-19T23:36:10.123456",
+            replies: [],
+          },
+          {
+            commentId: 4,
+            parentCommentId: 1,
+            depth: 1,
+            isMine: false,
+            user: {
+              userId: "USER_B",
+              name: "KUIT",
+              profileImageUrl: "https://cdn.example.com/users/77/profile.jpg",
+            },
+            content: "이 후기 보고 구매했어요!",
+            replyTo: { userId: "USER_A", name: "아이디" },
+            mentions: [],
+            counts: { likeCount: 1, dislikeCount: 0, replyCount: 0 },
+            myState: { reactionType: "NONE" },
+            status: "ACTIVE",
+            createdAt: "2025-02-19T23:37:01.000000",
+            updatedAt: "2025-02-19T23:37:01.000000",
+            replies: [],
+          },
+          {
+            commentId: 5,
+            parentCommentId: 1,
+            depth: 1,
+            isMine: false,
+            user: {
+              userId: "USER_B",
+              name: "KUIT",
+              profileImageUrl: "https://cdn.example.com/users/77/profile.jpg",
+            },
+            content: "이 후기 보고 구매했어요!",
+            replyTo: { userId: "USER_A", name: "아이디" },
+            mentions: [],
+            counts: { likeCount: 1, dislikeCount: 0, replyCount: 0 },
+            myState: { reactionType: "NONE" },
+            status: "ACTIVE",
+            createdAt: "2025-02-19T23:37:01.000000",
+            updatedAt: "2025-02-19T23:37:01.000000",
+            replies: [],
+          },
+        ],
+        hasMoreReplies: false,
+        nextRepliesCursor: null,
       },
       {
         commentId: 2,
+        parentCommentId: null,
+        depth: 0,
+        isMine: false,
         user: {
-          profileImageUrl: null,
-          name: "이수아",
-          userId: "KUIT_PM",
+          userId: "lylylylh",
+          name: "이윤희",
+          profileImageUrl: "https://cdn.example.com/users/12/profile.jpg",
         },
-        mentionedUserName: "아이디",
-        content: "감사합니다~~",
-        counts: {
-          likeCount: 67,
-          dislikeCount: 67,
-          replyCount: 2,
-        },
-        reactionType: "LIKE",
+        content: "충전기 받아서 며칠 사용해봤는데 만족스럽네요.",
+        replyTo: null,
+        mentions: [
+          { userId: "KUIT_PM", name: "이수아", startIndex: 0, length: 4 },
+          { userId: "lylylylh", name: "이윤희", startIndex: 12, length: 8 },
+        ],
+        counts: { likeCount: 67, dislikeCount: 67, replyCount: 67 },
+        myState: { reactionType: "LIKE" },
+        status: "ACTIVE",
         createdAt: "2025-02-19T23:35:34.861172",
-        commentReflies: [
+        updatedAt: "2025-02-19T23:35:34.861172",
+        replies: [
           {
-            commentReflyId: 3,
+            commentId: 3,
+            parentCommentId: 2,
+            depth: 1,
+            isMine: true,
             user: {
-              profileImageUrl: null,
-              name: "이수아",
               userId: "KUIT_PM",
+              name: "이수아",
+              profileImageUrl: "https://cdn.example.com/users/12/profile.jpg",
             },
-            mentionedUserName: "아이디",
-            content: "감사합니다~~",
-            counts: {
-              likeCount: 67,
-              dislikeCount: 67,
-              replyCount: 0,
-            },
-            reactionType: "LIKE",
-            createdAt: "2025-02-19T23:35:34.861172",
+            content: "test용 언급 위치 다름 @아이디 감사합니다~~",
+            replyTo: { userId: "USER_A", name: "아이디" },
+            mentions: [
+              { userId: "USER_A", name: "아이디", startIndex: 0, length: 4 },
+            ],
+            counts: { likeCount: 2, dislikeCount: 0, replyCount: 0 },
+            myState: { reactionType: "NONE" },
+            status: "ACTIVE",
+            createdAt: "2025-02-19T23:36:10.123456",
+            updatedAt: "2025-02-19T23:36:10.123456",
+            replies: [],
           },
           {
-            commentReflyId: 4,
+            commentId: 4,
+            parentCommentId: 2,
+            depth: 1,
+            isMine: false,
             user: {
-              profileImageUrl: null,
-              name: "이수아",
-              userId: "KUIT_PM",
+              userId: "USER_B",
+              name: "KUIT",
+              profileImageUrl: "https://cdn.example.com/users/77/profile.jpg",
             },
-            mentionedUserName: "아이디",
-            content: "감사합니다~~",
-            counts: {
-              likeCount: 67,
-              dislikeCount: 67,
-              replyCount: 0,
-            },
-            reactionType: "LIKE",
-            createdAt: "2025-02-19T23:35:34.861172",
+            content: "이 후기 보고 구매했어요!",
+            replyTo: { userId: "USER_A", name: "아이디" },
+            mentions: [],
+            counts: { likeCount: 1, dislikeCount: 0, replyCount: 0 },
+            myState: { reactionType: "NONE" },
+            status: "ACTIVE",
+            createdAt: "2025-02-19T23:37:01.000000",
+            updatedAt: "2025-02-19T23:37:01.000000",
+            replies: [],
           },
           {
-            commentReflyId: 5,
+            commentId: 5,
+            parentCommentId: 2,
+            depth: 1,
+            isMine: false,
             user: {
-              profileImageUrl: null,
-              name: "이수아",
-              userId: "KUIT_PM",
+              userId: "USER_B",
+              name: "KUIT",
+              profileImageUrl: "https://cdn.example.com/users/77/profile.jpg",
             },
-            mentionedUserName: "아이디",
-            content: "감사합니다~~",
-            counts: {
-              likeCount: 67,
-              dislikeCount: 67,
-              replyCount: 0,
-            },
-            reactionType: "LIKE",
-            createdAt: "2025-02-19T23:35:34.861172",
+            content: "이 후기 보고 구매했어요!",
+            replyTo: { userId: "USER_A", name: "아이디" },
+            mentions: [],
+            counts: { likeCount: 1, dislikeCount: 0, replyCount: 0 },
+            myState: { reactionType: "NONE" },
+            status: "ACTIVE",
+            createdAt: "2025-02-19T23:37:01.000000",
+            updatedAt: "2025-02-19T23:37:01.000000",
+            replies: [],
           },
         ],
+        hasMoreReplies: false,
+        nextRepliesCursor: null,
       },
     ],
   },
 };
+
+// 댓글/대댓글 모두 seed 하기 위한 재귀 유틸
+function seedCommentTree(node: any) {
+  seedCommentReaction(node.commentId, {
+    reaction: node.myState?.reactionType ?? "NONE",
+    likes: node.counts?.likeCount ?? 0,
+    dislikes: node.counts?.dislikeCount ?? 0,
+  });
+
+  for (const child of node.replies ?? []) {
+    seedCommentTree(child);
+  }
+}
 
 handlers.push(
   http.get("/community/feeds/:feedId/detail", ({ params }) => {
@@ -877,19 +979,7 @@ handlers.push(
     }
 
     for (const c of result.comments ?? []) {
-      seedCommentReaction(c.commentId, {
-        reaction: c.reactionType,
-        likes: c.counts.likeCount,
-        dislikes: c.counts.dislikeCount,
-      });
-
-      for (const r of c.commentReflies ?? []) {
-        seedCommentReaction(r.commentReflyId, {
-          reaction: r.reactionType,
-          likes: r.counts.likeCount,
-          dislikes: r.counts.dislikeCount,
-        });
-      }
+      seedCommentTree(c);
     }
 
     return HttpResponse.json(ok(result), { status: 200 });

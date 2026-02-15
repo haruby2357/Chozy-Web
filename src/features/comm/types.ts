@@ -55,14 +55,29 @@ export type FeedDetail =
       myState: FeedMyState;
     };
 
+export type Mention = {
+  userId: string;
+  name: string;
+  startIndex: number; // UTF-16
+  length: number; // UTF-16
+};
+
+export type ReplyTo = null | { userId: string; name: string };
+
 export type CommentItem = {
   commentId: number;
   user: FeedUser;
+
   quote: string;
+
   content: string;
+  mentions: Mention[];
+  replyTo: ReplyTo;
+
   counts: FeedCounts;
   myState: FeedMyState;
   createdAt: string;
+
   comment?: CommentItem[];
 };
 
@@ -108,12 +123,14 @@ export type ApiFeedContents = {
 
 export type ApiFeed = {
   feedId: number;
-  kind: "ORIGINAL" | "QUOTE";
+  kind: "ORIGINAL" | "REPOST" | "QUOTE";
   contentType: "REVIEW" | "POST";
   isMine: boolean;
   createdAt: string;
+
   user: ApiFeedUser;
   contents: ApiFeedContents;
+
   counts: {
     viewCount: number;
     commentCount: number;
@@ -121,6 +138,7 @@ export type ApiFeed = {
     dislikeCount: number;
     quoteCount: number;
   };
+
   myState: {
     reactionType: Reaction;
     isBookmarked: boolean;
@@ -129,34 +147,47 @@ export type ApiFeed = {
   };
 };
 
-export type ApiCommentReply = {
-  commentReflyId: number;
-  user: ApiFeedUser;
-  mentionedUserName?: string;
-  content: string;
-  counts: {
-    likeCount: number;
-    dislikeCount: number;
-    replyCount: number;
-  };
-  reactionType: Reaction;
-  createdAt: string;
+export type ApiMention = {
+  userId: string;
+  name: string;
+  startIndex: number; // UTF-16 index
+  length: number;
+};
+
+export type ApiReplyTo = null | {
+  userId: string;
+  name: string;
 };
 
 export type ApiComment = {
   commentId: number;
+  parentCommentId: number | null;
+  depth: number;
+  isMine: boolean;
+
   user: ApiFeedUser;
-  mentionedUserName?: string;
   content: string;
+
+  replyTo: ApiReplyTo;
+  mentions: ApiMention[];
+
   counts: {
     likeCount: number;
     dislikeCount: number;
     replyCount: number;
   };
-  reactionType: Reaction;
-  createdAt: string;
 
-  commentReflies?: ApiCommentReply[];
+  myState: {
+    reactionType: Reaction;
+  };
+
+  status: "ACTIVE" | "DELETED";
+  createdAt: string;
+  updatedAt: string;
+
+  replies: ApiComment[];
+  hasMoreReplies?: boolean;
+  nextRepliesCursor?: string | null;
 };
 
 export type ApiFeedDetailResult = {

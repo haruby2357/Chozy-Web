@@ -82,6 +82,8 @@ export default function PostDetail() {
 
         const res = await fetch(`/community/feeds/${feedId}/detail`);
         const data: ApiResponse<ApiFeedDetailResult> = await res.json();
+        console.log("detail raw:", data);
+        console.log("result keys:", Object.keys(data?.result ?? {}));
 
         if (data.code === 1000) {
           const ui = mapApiResultToUi(data.result);
@@ -175,6 +177,8 @@ export default function PostDetail() {
       quote: replyTarget?.loginId ?? "",
       content: text,
       createdAt: new Date().toISOString(),
+      mentions: [],
+      replyTo: null,
       counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
       myState: { reaction: "NONE", isbookmarked: false, isreposted: false },
       comment: [],

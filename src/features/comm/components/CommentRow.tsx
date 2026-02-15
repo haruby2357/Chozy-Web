@@ -7,7 +7,7 @@ import goodOff from "../../../assets/community/good-off.svg";
 import badOn from "../../../assets/community/bad-on.svg";
 import badOff from "../../../assets/community/bad-off.svg";
 
-import type { CommentItem } from "../types";
+import type { CommentItem, Mention } from "../types";
 
 function formatCommentDate(iso: string) {
   const date = new Date(iso);
@@ -59,6 +59,85 @@ function flattenRepliesToOneLevel(list: CommentItem[]): CommentItem[] {
   return out;
 }
 
+function buildMentionSegments(content: string, mentions: Mention[]) {
+  const safe = (mentions ?? [])
+    .filter((m) => Number.isFinite(m.startIndex) && Number.isFinite(m.length))
+    .slice()
+    .sort((a, b) => a.startIndex - b.startIndex);
+
+  const segments: Array<{ text: string; isMention: boolean; key: string }> = [];
+  let cursor = 0;
+
+  for (let i = 0; i < safe.length; i++) {
+    const m = safe[i];
+    const start = Math.max(0, m.startIndex);
+    const endName = start + Math.max(0, m.length);
+
+    if (start < cursor) continue; // overlap/invalid -> 무시
+    if (start > content.length) continue;
+
+    // 내용과 언급 위치가 일치하는지 검증
+    const expectedWithAt = `@${m.name}`;
+    const sliceWithAt = content.slice(start, start + expectedWithAt.length);
+
+    let isMatch = false;
+    let highlightStart = start;
+    let highlightEnd = start;
+
+    if (sliceWithAt === expectedWithAt) {
+      isMatch = true;
+      highlightEnd = start + expectedWithAt.length;
+    } else {
+      const sliceName = content.slice(start, endName);
+      const prevChar = content[start - 1] ?? "";
+      if (sliceName === m.name && prevChar === "@") {
+        isMatch = true;
+        highlightStart = start - 1;
+        highlightEnd = endName;
+      } else if (sliceName === m.name) {
+        isMatch = true;
+        highlightEnd = endName;
+      } else {
+        isMatch = false;
+      }
+    }
+
+    // 앞쪽 일반 텍스트
+    if (cursor < highlightStart) {
+      segments.push({
+        text: content.slice(cursor, highlightStart),
+        isMention: false,
+        key: `t-${i}-${cursor}`,
+      });
+    }
+
+    // 멘션 텍스트
+    segments.push({
+      text: content.slice(highlightStart, highlightEnd),
+      isMention: isMatch,
+      key: `m-${i}-${highlightStart}`,
+    });
+
+    cursor = highlightEnd;
+  }
+
+  // 남은 일반 텍스트
+  if (cursor < content.length) {
+    segments.push({
+      text: content.slice(cursor),
+      isMention: false,
+      key: `tail-${cursor}`,
+    });
+  }
+
+  // mentions가 없거나 다 무시되면 전체를 일반 텍스트로
+  if (segments.length === 0) {
+    return [{ text: content, isMention: false, key: "all" }];
+  }
+
+  return segments;
+}
+
 export default function CommentRow({
   item,
   depth = 0,
@@ -95,6 +174,11 @@ export default function CommentRow({
   const hiddenCount = Math.max(childrenForRender.length - DEFAULT_PREVIEW, 0);
 
   const showReplyTo = isChild && item.quote;
+
+  const segments = useMemo(
+    () => buildMentionSegments(item.content, item.mentions ?? []),
+    [item.content, item.mentions],
+  );
 
   const parentAvatarRef = useRef<HTMLImageElement | null>(null);
   const repliesWrapRef = useRef<HTMLDivElement | null>(null);
@@ -158,7 +242,14 @@ export default function CommentRow({
           )}
 
           <div className="mt-1 text-[14px] text-[#191919] whitespace-pre-line">
-            {item.content}
+            {segments.map((seg) => (
+              <span
+                key={seg.key}
+                className={seg.isMention ? "text-[#4C6DD0]" : undefined}
+              >
+                {seg.text}
+              </span>
+            ))}
           </div>
 
           <div className="mt-4 flex items-center gap-3 text-[12px] text-[#575757]">
@@ -258,7 +349,7 @@ export default function CommentRow({
                   <CommentRow
                     key={child.commentId}
                     item={child}
-                    depth={1} // ✅ 무조건 1단 답글로 렌더
+                    depth={1}
                     onToggleReaction={onToggleReaction}
                     onReplyClick={onReplyClick}
                     lastAvatarRef={
