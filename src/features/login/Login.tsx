@@ -41,14 +41,18 @@ export default function Login() {
       // 1. 서버에 로그인 요청
       const data = await login(userId, password);
 
-      if (data.isSuccess) {
+      if (data.success && data.result) {
         // 2. 성공 시 토큰을 localStorage에 저장
-        const { accessToken, refreshToken } = data.result;
+        const { accessToken, refreshToken, needsOnboarding } = data.result;
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
 
-        // 3. 홈으로 이동
-        navigate("/");
+        // 3. 이동 분기
+        if (needsOnboarding) {
+          navigate("/onboarding");
+        } else {
+          navigate("/");
+        }
       }
     } catch (error: any) {
       // 4. 명세서 에러 코드에 따른 처리

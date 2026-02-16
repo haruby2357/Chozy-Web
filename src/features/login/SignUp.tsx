@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { checkIdDuplicate } from "../../api/auth";
 import DetailHeader from "../../components/DetailHeader";
 import SubmitButton from "../../components/SubmitButton";
@@ -12,6 +12,7 @@ import eyeOffIcon from "../../assets/login/eye-off.svg";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -31,14 +32,17 @@ export default function SignUp() {
     icon?: string;
   } | null>(null);
 
+  const verifiedEmail = location.state?.email || "";
+
   const handleNext = () => {
     // 수집한 모든 정보를 다음 페이지로 넘깁니다.
     navigate("/login/nickname", {
       state: {
         loginId: userId,
         password: password,
-        // TODO: 아래 값들은 이메일/휴대폰 인증 받은 후 수정 예정
-        email: "example@naver.com",
+        email: verifiedEmail,
+
+        // TODO: 전화번호&이름&국가 정보 받아오면 넘겨주기
         name: "사용자 이름",
         phoneNumber: "01012345678",
         country: "KOREA", // 명세서 기본 국가 정보
