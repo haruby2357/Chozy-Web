@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom";
+import Onboarding from "../features/login/Onboarding";
 import Login from "../features/login/Login";
+import KakaoCallback from "../features/login/KakaoCallback";
 import Terms from "../features/login/Terms";
 import ServiceTerms from "../features/login/ServiceTerms";
 import PrivacyPolicy from "../features/login/PrivacyPolicy";
@@ -28,8 +30,12 @@ import FavoritePage from "../features/favorites/FavoritePage";
 export default function AppRouter() {
   return (
     <Routes>
+      {/* 온보딩 페이지 라우팅 */}
+      <Route path="/onboarding" element={<Onboarding />} />
+
       {/* 로그인 페이지 라우팅 */}
       <Route path="/login" element={<Login />} />
+      <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
       <Route path="/login/terms" element={<Terms />} />
       <Route path="/login/terms/service" element={<ServiceTerms />} />
       <Route path="/login/terms/privacy" element={<PrivacyPolicy />} />
