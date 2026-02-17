@@ -21,7 +21,6 @@ import dummyProfile from "../../../assets/all/dummyProfile.svg";
 import { toUiFeedItem } from "../../../api/domains/mypage/mapper";
 import type {
   FeedItem,
-  QuotedReviewContent,
   ReviewContent,
 } from "../../../api/domains/community/feedList/feedUi";
 import {

@@ -46,16 +46,6 @@ function mapFeed(api: ApiFeed): UiFeedDetail {
   const type: "REVIEW" | "POST" =
     api.contentType === "REVIEW" ? "REVIEW" : "POST";
 
-  const uiQuote = api.contents.quote
-    ? {
-        feedId: api.contents.quote.feedId,
-        user: mapApiUser(api.contents.quote.user),
-        text: api.contents.quote.text ?? "",
-        // quote 안에 review 정보가 안 내려오면(현재처럼) 여기까지만!
-        // 내려오는 스펙이면 vendor/title/rating/productUrl도 같이 채우면 됨
-      }
-    : undefined;
-
   const base = {
     feedId: api.feedId,
     user: mapApiUser(api.user),

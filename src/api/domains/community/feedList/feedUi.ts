@@ -1,5 +1,3 @@
-import type { FeedQuote } from "./types";
-
 export type Reaction = "LIKE" | "DISLIKE" | "NONE";
 
 export type FeedUser = {

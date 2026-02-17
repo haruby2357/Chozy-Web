@@ -9,8 +9,6 @@ const DEFAULT_MY_STATE = {
 };
 
 export function toUiFeedItem(s: ServerFeedItem): UiFeedItem {
-  const quote = s.contents.quote ? s.contents.quote : undefined;
-
   const contentImgs = (s.contents.images ?? [])
     .map((img) => img.imageUrl)
     .filter(Boolean);
@@ -83,21 +81,21 @@ export function toUiFeedItem(s: ServerFeedItem): UiFeedItem {
       productUrl: review?.productUrl ?? null,
       text: s.contents.text ?? "",
       contentImgs,
-      quote,
+      quote: uiQuote,
 
-      ...(quote
+      ...(uiQuote
         ? {
             quoteContent: {
               vendor: review?.vendor ?? "",
               title: review?.title ?? "",
               rating: review?.rating ?? 0,
               productUrl: review?.productUrl ?? null,
-              text: quote.text ?? "",
+              text: uiQuote.text ?? "",
               contentImgs: [],
               user: {
-                profileImg: quote.user.profileImageUrl ?? "",
-                userName: quote.user.name,
-                userId: quote.user.userId,
+                profileImg: uiQuote.user.profileImg ?? "",
+                userName: uiQuote.user.userName,
+                userId: uiQuote.user.userId,
               },
             },
           }
