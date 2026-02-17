@@ -107,7 +107,7 @@ export default function HashtagInput({
   };
 
   return (
-    <>
+    <div>
       {hashtags.length === 0 && !isHashtagInputActive ? (
         // 해시태그가 없고 입력 비활성화: 추가하기 버튼만 표시
         <label
@@ -121,7 +121,7 @@ export default function HashtagInput({
         </label>
       ) : (
         <div className="flex flex-col gap-2">
-          <label className="text-zinc-900 text-base font-normal font-['Pretendard'] leading-6">
+          <label className="flex text-zinc-900 text-base font-medium font-['Pretendard'] gap-1">
             해시 태그
           </label>
 
@@ -160,6 +160,6 @@ export default function HashtagInput({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

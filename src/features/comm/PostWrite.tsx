@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import SuccessModal from "./components/SuccessModal";
 import HashtagInput from "./components/HashtagInput";
 import ImageUpload from "./components/ImageUpload";
 import SubmitButton from "./components/SubmitButton";
 
 import backIcon from "../../assets/all/back.svg";
-import checkIcon from "../../assets/community/check.svg";
 
 export default function PostWrite() {
   const navigate = useNavigate();
@@ -145,18 +145,10 @@ export default function PostWrite() {
       />
 
       {/* 성공 모달 */}
-      {showSuccess && (
-        <div className="fixed inset-0 w-[390px] mx-auto bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="w-full h-[153px] bg-white rounded-2xl flex flex-col items-center gap-6 pt-9">
-            <div className="w-10 h-10 bg-[#800025] rounded-full flex items-center justify-center">
-              <img src={checkIcon} alt="Check" className="w-4 h-[11px]" />
-            </div>
-            <p className="text-center text-[#191919] font-medium text-base">
-              사담을 성공적으로 게시했어요.
-            </p>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        isOpen={showSuccess}
+        message="사담을 성공적으로 게시했어요."
+      />
     </div>
   );
 }

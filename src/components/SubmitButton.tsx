@@ -19,7 +19,7 @@ export default function SubmitButton({
     <button
       onClick={onSubmit}
       disabled={!isValid || isLoading}
-      className={`py-3 rounded-lg font-medium text-white transition-colors ${
+      className={`py-3 rounded font-medium text-white transition-colors ${
         isValid && !isLoading
           ? "bg-[#800025] cursor-pointer hover:bg-[#600020]"
           : "bg-[#E5E5E7] text-[#B5B5B5] cursor-not-allowed"
