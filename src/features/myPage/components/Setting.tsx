@@ -44,7 +44,7 @@ export default function Setting() {
   return (
     <>
       <DetailHeader title="설정" />
-      <div className="p-4 flex flex-col gap-5 bg-white">
+      <div className="p-4 flex flex-col gap-5 bg-white relative">
         <div>
           <p className="text-[#787878] text-[15px] mb-2">계정</p>
           <button
@@ -144,11 +144,11 @@ export default function Setting() {
         </div>
         {/* 토스트 메시지 */}
         <div
-          className={`fixed left-0 right-0 bottom-0 z-[1000] p-4 transition-all duration-200
+          className={`absolute left-0 right-0 bottom-0 z-[1000] p-4 transition-all duration-200
     ${showToast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
   `}
         >
-          <div className="mx-auto w-[358px]">
+          <div className="w-full">
             <div className="flex items-center gap-2 bg-[#787878] rounded-[4px] p-4">
               {isAlarmOn ? (
                 <img src={toastmsg} alt="토스트 아이콘" className="w-5 h-5" />

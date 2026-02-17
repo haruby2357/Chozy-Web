@@ -61,6 +61,7 @@ function CommMain() {
   return (
     <div className="h-full flex flex-col">
       <div
+        className="bg-[#F9F9F9]"
         style={{ opacity: isModalOpen ? 0.5 : 1, transition: "opacity 0.2s" }}
       >
         <Header />
@@ -76,7 +77,7 @@ function CommMain() {
       </div>
       <div
         ref={scrollRef}
-        className="scroll-available flex-1 overflow-y-auto scrollbar-hide"
+        className="scroll-available flex-1 overflow-y-auto scrollbar-hide bg-[#F9F9F9] px-2"
         style={{ opacity: isModalOpen ? 0.5 : 1, transition: "opacity 0.2s" }}
       >
         <PostList

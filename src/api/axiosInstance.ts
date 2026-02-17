@@ -2,7 +2,7 @@ import axios from "axios";
 
 // 기본 인스턴스 생성
 const axiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "https://chozy.net",
   timeout: 5000,
   headers: {
     "Content-Type": "application/json",
