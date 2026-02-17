@@ -17,7 +17,6 @@ import electronics from "../../assets/goodsPage/category/electronics.svg";
 import car from "../../assets/goodsPage/category/car.svg";
 
 import { getPopularKeywords } from "../../api/domains/goodsPage/topKeyword/api";
-import type { ApiPopularKeyword } from "../../api/domains/goodsPage/topKeyword/types";
 
 type ApiCategory =
   | "FASHION"

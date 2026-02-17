@@ -39,7 +39,7 @@ import {
   toggleCommentReaction,
 } from "../../api/domains/community/actions/api";
 
-import { followUser, unfollowUser } from "../../api/domains/follow";
+// import { followUser, unfollowUser } from "../../api/domains/follow";
 
 type ToastState = { text: string; icon?: string } | null;
 
