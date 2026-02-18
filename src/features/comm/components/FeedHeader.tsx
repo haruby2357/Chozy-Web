@@ -3,11 +3,16 @@ import FeedEtcSheet from "./FeedEtcSheet";
 import type { UiFeedUser } from "../../../api/domains/community/feedDetail";
 import dummyProfile from "../../../assets/all/dummyProfile.svg";
 
+type FollowStatus = "FOLLOWING" | "REQUESTED" | "NOT_FOLLOWING" | string;
+
 type Props = {
   feedId: number;
   user: UiFeedUser;
   isMine: boolean;
+
   isFollowing: boolean;
+  followStatus?: FollowStatus; // ✅ 추가
+
   onToggleFollow: () => void;
   etcIcon: string;
 };
@@ -17,10 +22,19 @@ export default function FeedHeader({
   isMine,
   user,
   isFollowing,
+  followStatus,
   onToggleFollow,
   etcIcon,
 }: Props) {
   const [openEtc, setOpenEtc] = useState(false);
+
+  const isRequested = followStatus === "REQUESTED";
+  const followingLike = isFollowing || isRequested;
+  const buttonText = followingLike
+    ? isRequested
+      ? "요청중"
+      : "팔로우 중"
+    : "팔로우";
 
   return (
     <>
@@ -45,12 +59,12 @@ export default function FeedHeader({
               type="button"
               onClick={onToggleFollow}
               className={
-                isFollowing
+                followingLike
                   ? "flex items-center justify-center px-2 py-1 bg-white w-20 h-7 rounded-[40px] text-[14px] text-[#787878] border border-[#DADADA]"
                   : "flex items-center justify-center px-2 py-1 bg-[#800025] w-14 h-7 rounded-[40px] text-[14px] text-[#FFF]"
               }
             >
-              {isFollowing ? "팔로우 중" : "팔로우"}
+              {buttonText}
             </button>
           )}
 

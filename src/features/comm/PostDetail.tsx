@@ -92,6 +92,9 @@ export default function PostDetail() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollRef = useRef(false);
 
+  // 팔로우
+  const [followStatus, setFollowStatus] = useState<string>("NOT_FOLLOWING");
+
   const showToast = (text: string, icon?: string) => {
     setToast({ text, icon });
     window.setTimeout(() => setToast(null), 2000);
@@ -130,6 +133,25 @@ export default function PostDetail() {
         false;
 
       setIsFollowing(!!serverFollowing);
+
+      const serverFollowStatus =
+        rawState?.followStatus ??
+        rawState?.myFollowStatus ??
+        rawState?.followStatusByMe; // 혹시 다른 키면 여기 추가
+
+      if (serverFollowStatus) {
+        setFollowStatus(String(serverFollowStatus));
+      } else {
+        setFollowStatus((prev) => prev); // 덮어쓰지 않기
+      }
+
+      // isFollowing은 followStatus로부터 계산하는 게 안전
+      setIsFollowing(
+        String(
+          serverFollowStatus ??
+            (serverFollowing ? "FOLLOWING" : "NOT_FOLLOWING"),
+        ) === "FOLLOWING",
+      );
 
       setCreatedAtText(formatKoreanDateTime(data.result.feed.createdAt));
       setViewCount(data.result.feed.counts?.viewCount ?? 0);
@@ -246,41 +268,49 @@ export default function PostDetail() {
   // ------------------------------
   // const isFollowing = !!feed.myState.isfollowing;
 
+  const isFollowingLike =
+    followStatus === "FOLLOWING" || followStatus === "REQUESTED";
+
   const handleToggleFollow = async () => {
     const targetPk = feed.user.userPk;
     if (!targetPk) return;
 
-    const nextIsFollowing = !isFollowing;
-
     try {
-      if (isFollowing) {
-        const res = await unfollowUser(targetPk); // DELETE
-        const next = res.result?.followStatus === "FOLLOWING";
-        setIsFollowing(next);
-      } else {
-        const res = await followUser(targetPk); // POST
-        const next = res.result?.followStatus === "FOLLOWING";
-        setIsFollowing(next);
-      }
+      if (isFollowingLike) {
+        const res = await unfollowUser(targetPk);
+        if (res.code !== 1000) throw new Error(res.message);
 
-      showToast(
-        nextIsFollowing
-          ? `@${feed.user.userId} 님을 팔로우했어요.`
-          : "팔로우를 취소했어요.",
-        nextIsFollowing ? toastmsg : undefined,
-      );
-
-      await fetchDetail();
-    } catch (e: any) {
-      console.error(e);
-
-      if (e.response?.status === 409) {
-        setIsFollowing(true);
-        await fetchDetail();
+        setFollowStatus("NOT_FOLLOWING");
+        setIsFollowing(false);
+        showToast(
+          followStatus === "REQUESTED"
+            ? "팔로우 요청을 취소했어요."
+            : "팔로우를 취소했어요.",
+        );
         return;
       }
 
-      showToast("처리 중 오류가 발생했어요.");
+      const res = await followUser(targetPk);
+      if (res.code !== 1000) throw new Error(res.message);
+
+      const status = res.result?.followStatus ?? "FOLLOWING";
+      setFollowStatus(status);
+      setIsFollowing(status === "FOLLOWING");
+
+      showToast(
+        status === "REQUESTED"
+          ? "팔로우 요청을 보냈어요."
+          : `@${feed.user.userId} 님을 팔로우했어요.`,
+        status === "REQUESTED" ? undefined : toastmsg,
+      );
+    } catch (e: any) {
+      console.error(e);
+      if (e.response?.status === 409) {
+        // 서버 상태와 꼬인 경우 동기화
+        await fetchDetail();
+        return;
+      }
+      showToast(e?.message ?? "처리 중 오류가 발생했어요.");
     }
   };
 
@@ -455,6 +485,7 @@ export default function PostDetail() {
         <div className="bg-white">
           <FeedHeader
             feedId={numericFeedId}
+            followStatus={followStatus}
             isMine={isMine}
             user={feed.user}
             isFollowing={isFollowing}

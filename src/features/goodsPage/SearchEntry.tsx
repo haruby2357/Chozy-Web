@@ -1,4 +1,5 @@
-import { useEffect, useCallback, useMemo, useState } from "react";
+import { useEffect, useCallback, useMemo, useState, useRef } from "react";
+import { setLike } from "../../api/domains/favorite/api";
 import { useNavigate } from "react-router-dom";
 
 import SearchBar2 from "../../components/SearchBar2";
@@ -98,6 +99,10 @@ export default function SearchEntry() {
   const [popularKeywords, setPopularKeywords] = useState<PopularKeyword[]>([]);
   const [recentProducts, setRecentProducts] = useState<RecentProduct[]>([]);
   const [recommends, setRecommends] = useState<RecommendKeyword[]>([]);
+  const recentProductsRef = useRef(recentProducts);
+  useEffect(() => {
+    recentProductsRef.current = recentProducts;
+  }, [recentProducts]);
 
   // const hasRecentKeywords = recentKeywords.length > 0;
   const hasPopularKeywords = popularKeywords.length > 0;
@@ -227,12 +232,27 @@ export default function SearchEntry() {
     goToResults(keyword);
   };
 
-  const onToggleRecentProductLike = (productId: number) => {
-    setRecentProducts((prev) =>
-      prev.map((p) =>
-        p.productId === productId ? { ...p, status: !p.status } : p,
-      ),
+  const onToggleRecentProductLike = async (productId: number) => {
+    const current = recentProductsRef.current.find(
+      (p) => p.productId === productId,
     );
+    if (!current) return;
+
+    const next = !current.status;
+
+    setRecentProducts((prev) =>
+      prev.map((p) => (p.productId === productId ? { ...p, status: next } : p)),
+    );
+
+    try {
+      await setLike(productId, next);
+    } catch {
+      setRecentProducts((prev) =>
+        prev.map((p) =>
+          p.productId === productId ? { ...p, status: !next } : p,
+        ),
+      );
+    }
   };
 
   return (

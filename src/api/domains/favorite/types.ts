@@ -1,3 +1,10 @@
+export type ApiResponse<T> = {
+  code: number;
+  message: string;
+  timestamp: string;
+  result: T;
+  success: boolean;
+};
 export interface LikeItem {
   productId: number;
   name: string;

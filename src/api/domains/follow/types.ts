@@ -1,4 +1,4 @@
-export type FollowStatus = "FOLLOWING" | "NONE";
+export type FollowStatus = "FOLLOWING" | "REQUESTED" | "INACTIVE" | "NONE";
 
 export type FollowResponse = {
   targetUserId: number;

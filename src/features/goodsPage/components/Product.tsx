@@ -1,5 +1,6 @@
 import heartOn from "../../../assets/goodsPage/heartOn.svg";
 import heartOff from "../../../assets/goodsPage/heartOff.svg";
+import { saveRecentProduct } from "../../../api/domains/goodsPage/search";
 
 type ProductSize = "md" | "sm";
 
@@ -61,11 +62,17 @@ export default function Product({
   const s = SIZE_MAP[size];
   const vendorLabel = formatVendor(vendor);
 
-  const openProduct = () => {
+  const openProduct = async () => {
     if (isSoldOut) return;
+
+    try {
+      await saveRecentProduct(productId);
+    } catch {
+      // 저장 실패해도 이동
+    }
+
     window.open(productUrl, "_blank");
   };
-
   return (
     <div className={`flex flex-col gap-2 ${s.w}`}>
       {/* 상품사진 */}
@@ -90,7 +97,7 @@ export default function Product({
           <img
             src={imageUrl}
             alt={name}
-            onClick={openProduct}
+            onClick={() => void openProduct()}
             className={[
               "w-full h-full object-cover rounded-[8px]",
               isSoldOut ? "cursor-default" : "cursor-pointer",
@@ -110,7 +117,10 @@ export default function Product({
 
           <button
             type="button"
-            onClick={() => onToggleLike?.(productId)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleLike?.(productId);
+            }}
             className="absolute bottom-3 right-3"
             aria-label={status ? "좋아요 해제" : "좋아요"}
           >
@@ -121,7 +131,7 @@ export default function Product({
 
       {/* 상품명 */}
       <p
-        onClick={openProduct}
+        onClick={() => void openProduct()}
         className={[
           "w-full text-[14px] font-semibold line-clamp-1",
           isSoldOut ? "cursor-default" : "cursor-pointer",

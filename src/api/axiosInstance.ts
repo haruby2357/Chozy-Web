@@ -2,8 +2,7 @@ import axios from "axios";
 
 // 기본 인스턴스 생성
 const axiosInstance = axios.create({
-  // baseURL: "/api",
-  baseURL: "/api", // 프록시 설정으로 인해 /api로 시작하는 요청은 자동으로 https://chozy.net으로 전달됨
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "https://chozy.net",
   timeout: 5000,
   headers: {
     "Content-Type": "application/json",
