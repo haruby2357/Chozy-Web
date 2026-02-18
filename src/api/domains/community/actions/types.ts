@@ -33,7 +33,23 @@ export type PostRequest = {
   img: { fileName: string; contentType: string }[] | null;
 };
 
-// 사담 작성 결과 (응답의 result 필드)
+// 사담 작성 결과
 export type PostCreateResult = {
+  feedId: number;
+};
+
+// 리뷰 작성 요청 데이터
+export type ReviewRequest = {
+  title: string;
+  content: string;
+  vendor: string;
+  rating: number;
+  productUrl: string;
+  hashTags: string[];
+  img: { fileName: string; contentType: string }[] | [];
+};
+
+// 리뷰 작성 결과
+export type ReviewCreateResult = {
   feedId: number;
 };
