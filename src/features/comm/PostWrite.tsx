@@ -6,6 +6,10 @@ import Toast from "../../components/Toast";
 import SuccessModal from "../../components/SuccessModal";
 import HashtagInput from "./components/HashtagInput";
 import ImageUpload from "./components/ImageUpload";
+import { mypageApi } from "../../api";
+import defaultProfile from "../../assets/mypage/defaultProfile.svg";
+import { getUserIdFromToken } from "../../api/auth";
+import { createPost } from "../../api/domains/community/actions";
 
 export default function PostWrite() {
   const navigate = useNavigate();
@@ -14,17 +18,37 @@ export default function PostWrite() {
   const [images, setImages] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const data = await mypageApi.getMyProfile();
+        if (data.code === 1000) {
+          setCurrentUser(data.result);
+        }
+      } catch (error) {
+        console.error("프로필 로드 실패:", error);
+      }
+    };
+    loadUserProfile();
+  }, []);
+
   const handleResizeHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
+  };
+
+  const showToast = (message: string, type: "success" | "error" = "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   };
 
   useEffect(() => {
@@ -36,52 +60,42 @@ export default function PostWrite() {
   };
 
   const handleSubmit = async () => {
+    const userId = getUserIdFromToken();
+
+    if (!userId) {
+      showToast("로그인 정보가 필요합니다. 다시 로그인해주세요.");
+      return;
+    }
+
     if (!isFormValid() || isLoading) return;
 
     setIsLoading(true);
     try {
-      // 이미지 데이터 변환
-      const imgData = images.map((file) => ({
-        imageUrl: file.name,
-        contentType: file.type,
-      }));
+      const requestBody = {
+        content: content,
+        hashTags: hashtags, // 배열을 JSON 문자열로 변환
+        img: [], // 이미지는 null로 처리
+      };
 
-      // 해시태그를 공백으로 구분된 문자열로 변환
-      const hashTagsString = hashtags.join(" ");
+      const data = await createPost(userId, requestBody);
 
-      const response = await fetch("/community/posts/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content,
-          hashTags: hashTagsString,
-          img: imgData,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.isSuccess) {
+      // 성공 코드 1000 확인 (공통 컨벤션)
+      if (data.code === 1000) {
         setShowSuccess(true);
-        // 2초 후 게시글 상세 페이지로 이동
         setTimeout(() => {
-          navigate(`/community/feeds/${data.result.postId}/detail`);
+          const feedId = data.result.feedId; // result 자체가 feedId임
+          navigate(`/community/feeds/${feedId}`);
         }, 2000);
       } else {
         setToast({
-          message: data.message || "사담 게시에 실패했습니다.",
+          message: data.message || "게시글 등록에 실패했습니다.",
           type: "error",
         });
         setTimeout(() => setToast(null), 3000);
       }
     } catch (error) {
-      console.error("사담 작성 중 오류:", error);
-      setToast({
-        message: "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
-        type: "error",
-      });
+      console.error(error);
+      setToast({ message: "네트워크 오류가 발생했습니다.", type: "error" });
       setTimeout(() => setToast(null), 3000);
     } finally {
       setIsLoading(false);
@@ -99,16 +113,16 @@ export default function PostWrite() {
           {/* 프로필 영역 */}
           <div className="w-full inline-flex justify-start items-center gap-2">
             <img
-              className="w-9 h-9 rounded-full border border-stone-50"
-              src="https://placehold.co/36x36"
+              className="w-9 h-9 rounded-full border border-stone-50 object-cover"
+              src={currentUser?.profileImageUrl ?? defaultProfile}
               alt="profile"
             />
             <div className="inline-flex flex-col justify-center items-start gap-0.5">
               <div className="text-center justify-start text-zinc-900 text-sm font-medium font-['Pretendard'] leading-5">
-                KUIT
+                {currentUser?.nickname || "닉네임"}{" "}
               </div>
               <div className="text-center justify-start text-zinc-400 text-[10px] font-normal font-['Pretendard']">
-                @KUIT PM
+                @{currentUser?.loginId || "userid"}{" "}
               </div>
             </div>
           </div>

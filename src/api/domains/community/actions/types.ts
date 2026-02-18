@@ -25,3 +25,15 @@ export type CommentLikeToggleResult = {
     dislikeCount: number;
   };
 };
+
+// 사담 작성 요청 데이터
+export type PostRequest = {
+  content: string;
+  hashTags: string[]; // JSON string 형태
+  img: { fileName: string; contentType: string }[] | null;
+};
+
+// 사담 작성 결과 (응답의 result 필드)
+export type PostCreateResult = {
+  feedId: number;
+};

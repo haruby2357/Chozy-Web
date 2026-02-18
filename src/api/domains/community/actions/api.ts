@@ -4,6 +4,8 @@ import type {
   LikeToggleResult,
   BookmarkToggleResult,
   CommentLikeToggleResult,
+  PostRequest,
+  PostCreateResult,
 } from "./types";
 
 // 피드 좋아요/싫어요 토글
@@ -29,6 +31,15 @@ export async function toggleCommentReaction(commentId: number, like: boolean) {
   const res = await axiosInstance.post<ApiResponse<CommentLikeToggleResult>>(
     `/community/comments/${commentId}/reactions`,
     { like },
+  );
+  return res.data;
+}
+
+// 사담 작성
+export async function createPost(userId: number, postData: PostRequest) {
+  const res = await axiosInstance.post<ApiResponse<PostCreateResult>>(
+    `/community/feeds/post?userId=${userId}`,
+    postData,
   );
   return res.data;
 }
