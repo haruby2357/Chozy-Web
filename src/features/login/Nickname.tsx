@@ -12,7 +12,7 @@ export default function Nickname() {
   const [nickname, setNickname] = useState("");
   const [nicknameErrors, setNicknameErrors] = useState<string[]>([]);
 
-  const [, setToast] = useState<{
+  const [_, setToast] = useState<{
     message: string;
     type: "success" | "error";
     icon?: string;

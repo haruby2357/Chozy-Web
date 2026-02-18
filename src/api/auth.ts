@@ -2,7 +2,7 @@ import axiosInstance from "./axiosInstance";
 
 // KAKAO_AUTH_URL
 const REST_API_KEY = "9ac25a37f735552809d85c147c94bf37";
-const REDIRECT_URI = "http://localhost:5173/auth/kakao/callback";
+const REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI;
 
 export const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 
