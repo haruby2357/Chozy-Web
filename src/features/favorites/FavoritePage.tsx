@@ -39,11 +39,10 @@ export default function FavoritePage() {
       } catch {
         if (!alive) return;
         setLikesState([]);
-      } 
+      }
 
       if (!alive) return;
       setLoading(false);
-      
     };
 
     run();
@@ -90,9 +89,6 @@ export default function FavoritePage() {
                   discountRate={item.discountRate}
                   imageUrl={item.imageUrl}
                   productUrl={item.productUrl}
-                  rating={item.rating}
-                  reviewCount={item.reviewCount}
-                  deliveryFee={item.deliveryFee}
                   status={true} // 찜 여부
                   isSoldOut={item.status} // 명세서 status = 품절 여부
                   onToggleLike={handleRemoveFavorite}

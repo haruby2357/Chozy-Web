@@ -416,9 +416,6 @@ export default function SearchEntry() {
                         discountRate={p.discountRate}
                         imageUrl={p.imageUrl}
                         productUrl={p.productUrl}
-                        rating={p.rating}
-                        reviewCount={p.reviewCount}
-                        deliveryFee={p.deliveryFee}
                         status={p.status}
                         onToggleLike={onToggleRecentProductLike}
                       />
