@@ -21,10 +21,7 @@ export default function KakaoCallback() {
         if (data.success && data.result) {
           // 2. 받아온 토큰을 브라우저에 저장
           // (이후 axiosInstance가 이 토큰을 자동으로 꺼내서 씀)
-          localStorage.setItem(
-            "accessToken",
-            data.result.accessTokenaccessToken,
-          );
+          localStorage.setItem("accessToken", data.result.accessToken);
           localStorage.setItem("refreshToken", data.result.refreshToken);
 
           // 3. needsOnboarding 에 따른 분기

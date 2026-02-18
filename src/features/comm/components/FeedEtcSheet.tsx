@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import BottomSheet from "./BottomSheet";
 import SheetRow from "./SheetRow";
 
@@ -6,6 +7,10 @@ import notInterestedIcon from "../../../assets/community/notInterested.svg";
 import blockIcon from "../../../assets/community/block.svg";
 import editIcon from "../../../assets/community/edit.svg";
 import deleteIcon from "../../../assets/community/delete.svg";
+
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
+import SuccessModal from "../../../components/SuccessModal";
+import { deleteFeed } from "../../../api/domains/community/etc/api";
 
 type Props = {
   open: boolean;
@@ -25,17 +30,47 @@ export default function FeedEtcSheet({
   authorUserId,
 }: Props) {
   const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [doneOpen, setDoneOpen] = useState(false);
 
   const handleEdit = () => {
     onClose();
   };
 
-  const handleDelete = async () => {
-    onClose();
+  console.log("delete feedId:", feedId);
 
-    const ok = window.confirm("게시글을 삭제할까요?");
-    if (!ok) return;
-    navigate(-1);
+  // 삭제하기
+  const onClickDelete = () => {
+    onClose();
+    setConfirmOpen(true);
+  };
+
+  const handleCancelDelete = () => {
+    if (deleting) return;
+    setConfirmOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleting) return;
+
+    try {
+      setDeleting(true);
+      await deleteFeed(feedId);
+
+      setConfirmOpen(false);
+      setDoneOpen(true);
+
+      window.setTimeout(() => {
+        setDoneOpen(false);
+        navigate(-1);
+      }, 900);
+    } catch (e: any) {
+      console.error("게시글 삭제 실패:", e);
+      alert(e?.message ?? "게시글 삭제에 실패했어요.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleNotInterested = async () => {
@@ -52,29 +87,47 @@ export default function FeedEtcSheet({
   };
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="overflow-hidden">
-        {isMine ? (
-          <div className="divide-y divide-[#F2F2F2]">
-            <SheetRow label="수정하기" icon={editIcon} onClick={handleEdit} />
-            <SheetRow
-              label="삭제하기"
-              icon={deleteIcon}
-              danger
-              onClick={handleDelete}
-            />
-          </div>
-        ) : (
-          <div className="divide-y divide-[#F2F2F2]">
-            <SheetRow
-              label="관심 없음"
-              icon={notInterestedIcon}
-              onClick={handleNotInterested}
-            />
-            <SheetRow label="차단하기" icon={blockIcon} onClick={handleBlock} />
-          </div>
-        )}
-      </div>
-    </BottomSheet>
+    <>
+      <BottomSheet open={open} onClose={onClose}>
+        <div className="overflow-hidden">
+          {isMine ? (
+            <div className="divide-y divide-[#F2F2F2]">
+              <SheetRow label="수정하기" icon={editIcon} onClick={handleEdit} />
+              <SheetRow
+                label="삭제하기"
+                icon={deleteIcon}
+                danger
+                onClick={onClickDelete}
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F2F2F2]">
+              <SheetRow
+                label="관심 없음"
+                icon={notInterestedIcon}
+                onClick={handleNotInterested}
+              />
+              <SheetRow
+                label="차단하기"
+                icon={blockIcon}
+                onClick={handleBlock}
+              />
+            </div>
+          )}
+        </div>
+      </BottomSheet>
+
+      <ConfirmDeleteModal
+        open={confirmOpen}
+        title="정말 삭제하시겠어요?"
+        confirmText={deleting ? "삭제중..." : "예"}
+        cancelText="아니요"
+        confirmDisabled={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      <SuccessModal isOpen={doneOpen} message="삭제를 완료했어요." />
+    </>
   );
 }

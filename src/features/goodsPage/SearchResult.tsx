@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import SearchBar2 from "../../components/SearchBar2";
 import Sort, { type SortKey } from "./components/Sort";
 import Product from "./components/Product";
+import ScrollToTop from "./components/ScrollToTop";
 import filter from "../../assets/all/filter.svg";
 import emptyIcon from "../../assets/all/Empty_favorite_icon.svg";
 
@@ -27,14 +28,12 @@ type ApiCategory =
 
 type ApiProduct = {
   productId: number;
+  vendor: string;
   name: string;
   originalPrice: number;
   discountRate: number;
   imageUrl: string;
   productUrl: string;
-  rating: number;
-  reviewCount: number;
-  deliveryFee: number;
   status: boolean;
 };
 
@@ -98,6 +97,12 @@ export default function SearchResult() {
   const minRatingQ = readNum(searchParams, "minRating");
   const maxRatingQ = readNum(searchParams, "maxRating");
 
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const observerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (category && searchParams.get("search")) {
       const next = new URLSearchParams(searchParams);
@@ -151,15 +156,12 @@ export default function SearchResult() {
       maxPrice: maxPriceQ,
       minRating: minRatingQ,
       maxRating: maxRatingQ,
+      page,
+      size: 20,
     };
 
-    if (category) {
-      return { ...base, category };
-    }
-
-    if (searchParam) {
-      return { ...base, search: searchParam };
-    }
+    if (category) return { ...base, category };
+    if (searchParam) return { ...base, search: searchParam };
 
     return base;
   }, [
@@ -170,46 +172,91 @@ export default function SearchResult() {
     maxPriceQ,
     minRatingQ,
     maxRatingQ,
+    page,
   ]);
 
   useEffect(() => {
+    // 조건 바뀌면 처음부터 다시
+    setPage(0);
+    setHasNext(true);
+    setProductList([]);
+  }, [
+    category,
+    searchParam,
+    sort,
+    minPriceQ,
+    maxPriceQ,
+    minRatingQ,
+    maxRatingQ,
+  ]);
+
+  // 검색 결과 조회
+  useEffect(() => {
     (async () => {
-      setLoading(true);
+      if (page === 0) setLoading(true);
+      else setLoadingMore(true);
+
       try {
         const data = await getHomeProducts(request);
-        const items = data.result.result.items;
+        const result = data.result.result;
+        const items = result.items ?? [];
 
-        setProductList(
-          items.map((p: HomeProductItem) => ({
-            productId: p.productId,
-            name: p.name,
-            originalPrice: p.originalPrice,
-            discountRate: p.discountRate,
-            imageUrl: p.imageUrl,
-            productUrl: p.productUrl,
+        const mappedItems: ApiProduct[] = items.map((p: HomeProductItem) => ({
+          productId: p.productId,
+          vendor: p.vendor,
+          name: p.name,
+          originalPrice: p.originalPrice,
+          discountRate: p.discountRate,
+          imageUrl: p.imageUrl,
+          productUrl: p.productUrl,
+          status: p.isFavorited,
+        }));
 
-            // Swagger에 없는 값은 기본값
-            rating: 0,
-            reviewCount: 0,
-            deliveryFee: 0,
+        setProductList((prev) => {
+          const next = page === 0 ? mappedItems : [...prev, ...mappedItems];
+          const uniq = new Map<number, ApiProduct>();
+          next.forEach((it) => uniq.set(it.productId, it));
+          return Array.from(uniq.values());
+        });
 
-            status: p.isFavorited,
-          })),
-        );
+        setHasNext(result.hasNext);
       } catch (e) {
         console.error("상품 목록 로딩 실패:", e);
-        setProductList([]);
+        if (page === 0) setProductList([]);
       } finally {
-        setLoading(false);
+        if (page === 0) setLoading(false);
+        else setLoadingMore(false);
       }
     })();
-  }, [request]);
+  }, [request, page]);
 
   const handleSortChange = (nextSort: SortKey) => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("sort", nextSort);
     setSearchParams(nextParams, { replace: true });
   };
+
+  useEffect(() => {
+    if (!observerRef.current) return;
+    if (!hasNext) return;
+
+    const el = observerRef.current;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (!first.isIntersecting) return;
+        if (loading || loadingMore) return;
+        if (!hasNext) return;
+
+        setPage((prev) => prev + 1);
+      },
+      { threshold: 1 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNext, loading, loadingMore]);
 
   // 좋아요 토글(서버 연동 전): status 토글
   const handleToggleLike = (productId: number) => {
@@ -226,7 +273,7 @@ export default function SearchResult() {
     <div className="relative h-full bg-white flex flex-col">
       <SearchBar2 backBehavior="BACK" focusNavigateTo="/home/search" />
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide pt-20">
+      <div className="scroll-available flex-1 overflow-y-auto scrollbar-hide pt-20">
         {/* DEV ONLY: 필터 바텀시트 테스트 진입 버튼 */}
         <div className="bg-white px-4 pb-[9px] flex gap-2">
           <button
@@ -328,22 +375,35 @@ export default function SearchResult() {
                 <Product
                   key={p.productId}
                   productId={p.productId}
+                  vendor={p.vendor}
                   name={p.name}
                   originalPrice={p.originalPrice}
                   discountRate={p.discountRate}
                   imageUrl={p.imageUrl}
                   productUrl={p.productUrl}
-                  rating={p.rating}
-                  reviewCount={p.reviewCount}
-                  deliveryFee={p.deliveryFee}
                   status={p.status}
                   onToggleLike={handleToggleLike}
                 />
               ))}
             </div>
+            <div ref={observerRef} className="h-6" />
+
+            {/* 하단 상태 문구 */}
+            {loadingMore && (
+              <p className="text-center text-[14px] text-[#B5B5B5] py-4">
+                더 불러오는 중...
+              </p>
+            )}
+
+            {!loading && !loadingMore && productList.length > 0 && !hasNext && (
+              <p className="text-center text-[14px] text-[#B5B5B5] py-4">
+                마지막 상품입니다.
+              </p>
+            )}
           </div>
         )}
       </div>
+      <ScrollToTop scrollTargetSelector=".scroll-available" />
     </div>
   );
 }

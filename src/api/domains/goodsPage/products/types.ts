@@ -25,6 +25,7 @@ export type HomeProductsRequest = {
 
 export type HomeProductItem = {
   productId: number;
+  vendor: string;
   name: string;
   originalPrice: number;
   discountRate: number;

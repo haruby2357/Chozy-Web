@@ -1,11 +1,12 @@
 // 상품페이지의 메인페이지
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "./components/Header";
 import Nav from "../../components/Nav";
 import Category from "./components/Category";
 import SearchBar from "../../components/SearchBar";
 import Product from "./components/Product";
+import ScrollToTop from "./components/ScrollToTop";
 
 import cloth from "../../assets/goodsPage/category/cloth.svg";
 import beauty from "../../assets/goodsPage/category/beauty.svg";
@@ -17,6 +18,7 @@ import electronics from "../../assets/goodsPage/category/electronics.svg";
 import car from "../../assets/goodsPage/category/car.svg";
 
 import { getPopularKeywords } from "../../api/domains/goodsPage/topKeyword/api";
+import { getRecommendProducts } from "../../api/domains/goodsPage";
 
 type ApiCategory =
   | "FASHION"
@@ -30,23 +32,13 @@ type ApiCategory =
 
 type ApiProduct = {
   productId: number;
+  vendor: string;
   name: string;
   originalPrice: number;
   discountRate: number;
   imageUrl: string;
   productUrl: string;
-  rating: number;
-  reviewCount: number;
-  deliveryFee: number;
   status: boolean;
-};
-
-type ApiResponse<T> = {
-  isSuccess: boolean;
-  code: number;
-  message: string;
-  timestamp: string;
-  result: T;
 };
 
 const categories: {
@@ -69,21 +61,63 @@ function Home() {
 
   const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
   const [productList, setProductList] = useState<ApiProduct[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingProducts] = useState(false);
+
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // 추천 상품 요청 URL (명세 기반)
-  const recommendUrl = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("sort", "RELEVANCE");
-    return `/home/products?${params.toString()}`;
+  const loadRecommend = async (nextPage: number) => {
+    if (loading || !hasNext) return;
+
+    setLoading(true);
+    try {
+      const data = await getRecommendProducts({
+        page: nextPage,
+        size: 20,
+      });
+
+      const result = data.result.result;
+
+      const mappedItems: ApiProduct[] = (result.items ?? []).map((p: any) => ({
+        productId: p.productId,
+        vendor: p.vendor,
+        name: p.name,
+        originalPrice: p.originalPrice,
+        discountRate: p.discountRate,
+        imageUrl: p.imageUrl,
+        productUrl: p.productUrl,
+        status: !!p.isFavorited,
+      }));
+
+      setProductList((prev) => {
+        const next = [...prev, ...mappedItems];
+        const uniq = new Map<number, (typeof next)[number]>();
+        next.forEach((it) => uniq.set(it.productId, it));
+        return Array.from(uniq.values());
+      });
+
+      setHasNext(result.hasNext);
+      setPage(result.page);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRecommend(0);
   }, []);
 
+  // 인기 검색어
   useEffect(() => {
     (async () => {
       try {
         const data = await getPopularKeywords();
         setPopularKeywords(
-          (data.result ?? []).slice(0, 10).map((k) => k.keyword),
+          (data.result ?? []).slice(0, 10).map((k: any) => k.keyword),
         );
       } catch (e) {
         console.error("인기검색어 로딩 실패:", e);
@@ -92,22 +126,24 @@ function Home() {
     })();
   }, []);
 
+  const observerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
-    // 추천 상품 불러오기
-    (async () => {
-      setLoadingProducts(true);
-      try {
-        const res = await fetch(recommendUrl);
-        const data: ApiResponse<ApiProduct[]> = await res.json();
-        setProductList(data.result ?? []);
-      } catch (e) {
-        console.error("추천 상품 로딩 실패:", e);
-        setProductList([]);
-      } finally {
-        setLoadingProducts(false);
-      }
-    })();
-  }, [recommendUrl]);
+    if (!observerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNext) {
+          loadRecommend(page + 1);
+        }
+      },
+      { threshold: 1 },
+    );
+
+    observer.observe(observerRef.current);
+
+    return () => observer.disconnect();
+  }, [page, hasNext]);
 
   // 하트 토글(서버 연동 전): status 토글
   const handleToggleLike = (productId: number) => {
@@ -190,23 +226,23 @@ function Home() {
                   <Product
                     key={p.productId}
                     productId={p.productId}
+                    vendor={p.vendor}
                     imageUrl={p.imageUrl}
                     productUrl={p.productUrl}
                     name={p.name}
                     originalPrice={p.originalPrice}
                     discountRate={p.discountRate}
-                    rating={p.rating}
-                    reviewCount={p.reviewCount}
-                    deliveryFee={p.deliveryFee}
                     status={p.status}
                     onToggleLike={handleToggleLike}
                   />
                 ))}
               </div>
+              <div ref={observerRef} />
             </div>
           </main>
         </div>
         <Nav scrollTargetSelector=".scroll-available" />
+        <ScrollToTop scrollTargetSelector=".scroll-available" />
       </div>
     </>
   );
