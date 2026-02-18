@@ -1,20 +1,27 @@
-export type LikeItem = {
+export interface LikeItem {
   productId: number;
   name: string;
   originalPrice: number;
   discountRate: number;
   imageUrl: string;
   productUrl: string;
-  rating: number;
-  reviewCount: number;
-  deliveryFee: number;
-  status: boolean; // 명세상 품절 여부
-};
+}
 
-export type ApiEnvelope<T> = {
-  isSuccess: boolean;
+export interface LikesPage {
+  items: LikeItem[];
+  page: number;
+  size: number;
+  hasNext: boolean;
+}
+
+export interface LikesResult {
+  result: LikesPage;
+}
+
+export interface LikesResponse {
   code: number;
   message: string;
-  timestamp?: string;
-  result: T;
-};
+  timestamp: string;
+  result: LikesResult;
+  success: boolean;
+}

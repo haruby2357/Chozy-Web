@@ -57,11 +57,15 @@ axiosInstance.interceptors.response.use(
           originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
           return axios(originalRequest);
         }
-      } catch (refreshError: any) {
+      } catch (refreshError: unknown) {
+        const maybeAxiosError = refreshError as {
+          response?: { data?: { code?: number }; status?: number };
+        };
+        
         // 명세서 에러 코드 4013: 리프레시 토큰도 만료되었거나 유효하지 않음
-        const errorCode = refreshError.response?.data?.code;
+        const errorCode = maybeAxiosError.response?.data?.code;
 
-        if (errorCode === 4013 || refreshError.response?.status === 401) {
+        if (errorCode === 4013 || maybeAxiosError.response?.status === 401) {
           alert("인증 정보가 유효하지 않습니다. 다시 로그인해 주세요.");
           localStorage.clear(); // 모든 토큰 삭제
           window.location.href = "/login"; // 로그인 페이지로 튕기기
