@@ -4,36 +4,28 @@ import { useNavigate } from "react-router-dom";
 import SearchBar2 from "../../components/SearchBar2";
 import Product from "./components/Product";
 
-import recentCancel from "../../assets/goodsPage/search/recentsearch_cancel.svg";
 import popularUp from "../../assets/goodsPage/search/popular_up.svg";
 import popularDown from "../../assets/goodsPage/search/popular_down.svg";
 import popularStay from "../../assets/goodsPage/search/popular_stay.svg";
 import clueIcon from "../../assets/goodsPage/search/clue.svg";
 
+import RecentKeywordsSection from "../../components/search/RecentKeywordsSection";
+
 import {
   deleteAllRecentKeywords,
   deleteRecentKeyword,
-} from "../../api/domains/goods/search";
+  getPopularKeywords,
+  getRecentKeywords,
+  getRecentProducts,
+  getRecommendKeywords,
+  saveSearchKeyword,
+} from "../../api/domains/goodsPage/search";
 
-type ApiResponse<T> = {
-  isSuccess: boolean;
-  code: number;
-  message: string;
-  timestamp: string;
-  result?: T;
-};
-
-type RecentKeyword = {
-  keywordId: number;
-  keyword: string;
-};
-
-type PopularKeyword = {
-  keywordId: number;
-  keyword: string;
-  previousRank: number;
-  currentRank: number;
-};
+import type {
+  RecentKeyword,
+  PopularKeyword,
+  RecommendKeyword,
+} from "../../api/domains/goodsPage/search";
 
 type RecentProduct = {
   productId: number;
@@ -46,11 +38,6 @@ type RecentProduct = {
   reviewCount: number;
   deliveryFee: number;
   status: boolean;
-};
-
-type RecommendKeyword = {
-  keywordId: number;
-  keyword: string;
 };
 
 const SECTION_GAP_BG = "bg-[#F5F5F5]";
@@ -110,12 +97,11 @@ export default function SearchEntry() {
   const [recentKeywords, setRecentKeywords] = useState<RecentKeyword[]>([]);
   const [popularKeywords, setPopularKeywords] = useState<PopularKeyword[]>([]);
   const [recentProducts, setRecentProducts] = useState<RecentProduct[]>([]);
+  const [recommends, setRecommends] = useState<RecommendKeyword[]>([]);
 
-  const hasRecentKeywords = recentKeywords.length > 0;
+  // const hasRecentKeywords = recentKeywords.length > 0;
   const hasPopularKeywords = popularKeywords.length > 0;
   const hasRecentProducts = recentProducts.length > 0;
-
-  const [recommends, setRecommends] = useState<RecommendKeyword[]>([]);
 
   const trimmed = query.trim();
   const isBlankOnly = query.length > 0 && trimmed.length === 0;
@@ -133,33 +119,6 @@ export default function SearchEntry() {
       currentRank: 0,
     }));
   }, [hasPopularKeywords, popularKeywords]);
-
-  const fetchJson = async <T,>(
-    url: string,
-    signal?: AbortSignal,
-  ): Promise<T> => {
-    const res = await fetch(url, { signal });
-    const data = (await res.json()) as ApiResponse<T>;
-    return (data.result ?? ([] as unknown as T)) as T;
-  };
-
-  // // 전체 삭제: DELETE /home/search/recent
-  // const deleteAllRecentKeywordsApi = async () => {
-  //   const res = await fetch("/home/search/recent", { method: "DELETE" });
-  //   const data = (await res.json()) as ApiResponse<string>;
-  //   if (!res.ok || !data.isSuccess) throw new Error(data.message);
-  //   return data;
-  // };
-
-  // // 개별 삭제: DELETE /home/searches/recent/{keywordId}
-  // const deleteOneRecentKeywordApi = async (keywordId: number) => {
-  //   const res = await fetch(`/home/searches/recent/${keywordId}`, {
-  //     method: "DELETE",
-  //   });
-  //   const data = (await res.json()) as ApiResponse<string>;
-  //   if (!res.ok || !data.isSuccess) throw new Error(data.message);
-  //   return data;
-  // };
 
   const onDeleteRecentKeyword = async (keywordId: number) => {
     const prev = recentKeywords;
@@ -185,15 +144,36 @@ export default function SearchEntry() {
   };
 
   const loadSections = useCallback(async () => {
-    const [recent, popular, products] = await Promise.all([
-      fetchJson<RecentKeyword[]>("/home/search/recent"),
-      fetchJson<PopularKeyword[]>("/home/search/popular"),
-      fetchJson<RecentProduct[]>("/home/products/recent"),
+    const [recentR, popularR, productsR] = await Promise.allSettled([
+      getRecentKeywords(),
+      getPopularKeywords(),
+      getRecentProducts(),
     ]);
 
-    setRecentKeywords((recent ?? []).slice(0, 10));
-    setPopularKeywords((popular ?? []).slice(0, 8));
-    setRecentProducts((products ?? []).slice(0, 6));
+    setRecentKeywords(
+      recentR.status === "fulfilled" ? recentR.value.slice(0, 10) : [],
+    );
+
+    setPopularKeywords(
+      popularR.status === "fulfilled" ? popularR.value.slice(0, 8) : [],
+    );
+
+    const productsApi = productsR.status === "fulfilled" ? productsR.value : [];
+
+    setRecentProducts(
+      productsApi.slice(0, 6).map((p) => ({
+        productId: p.productId,
+        name: p.name,
+        originalPrice: p.originalPrice,
+        discountRate: p.discountRate,
+        imageUrl: p.imageUrl,
+        productUrl: p.productUrl,
+        rating: 0,
+        reviewCount: 0,
+        deliveryFee: 0,
+        status: p.isFavorited,
+      })),
+    );
   }, []);
 
   useEffect(() => {
@@ -206,28 +186,17 @@ export default function SearchEntry() {
   }, [loadSections]);
 
   useEffect(() => {
-    // 자동완성 숨김 조건
-    if (!shouldShowAutocomplete) {
-      return;
-    }
+    if (!shouldShowAutocomplete) return;
 
     const ac = new AbortController();
 
-    // 디바운싱: 사용자 입력 중에는 API 호출 지연, 입력 완료 후 호출
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
-          const list = await fetchJson<RecommendKeyword[]>(
-            `/home/search/recommend?keyword=${encodeURIComponent(trimmed)}`,
-            ac.signal,
-          );
-          if (!ac.signal.aborted) {
-            setRecommends((list ?? []).slice(0, 10));
-          }
+          const list = await getRecommendKeywords(trimmed, ac.signal);
+          if (!ac.signal.aborted) setRecommends(list.slice(0, 10));
         } catch {
-          if (!ac.signal.aborted) {
-            setRecommends([]);
-          }
+          if (!ac.signal.aborted) setRecommends([]);
         }
       })();
     }, 200);
@@ -235,31 +204,26 @@ export default function SearchEntry() {
     return () => {
       window.clearTimeout(timer);
       ac.abort();
-      // 정리 시에만 상태 초기화
       setRecommends([]);
     };
   }, [trimmed, shouldShowAutocomplete]);
 
-  const saveSearchKeyword = async (keyword: string) => {
-    // “검색 결과 화면으로 이동할 때” 1회 API 호출
-    // Enter / 최근검색어 클릭 / 인기검색어 클릭 / 자동완성 선택
-    await fetch("/home/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword }),
-    }).catch(() => {});
-  };
-
   const goToResults = (keyword: string) => {
-    const url = `/home/products?search=${encodeURIComponent(keyword)}&source=manual`;
-    navigate(url);
+     navigate(
+       `/home/products?search=${encodeURIComponent(keyword)}&source=manual`,
+     );
   };
 
   const runSearch = async (rawKeyword: string) => {
     const keyword = rawKeyword.trim();
     if (!keyword) return;
 
-    await saveSearchKeyword(keyword);
+    try {
+      await saveSearchKeyword(keyword);
+    } catch {
+      // 저장 실패해도 검색은 진행
+    }
+
     goToResults(keyword);
   };
 
@@ -284,57 +248,13 @@ export default function SearchEntry() {
       <main className="flex-1 overflow-y-auto scrollbar-hide pt-[72px]">
         <section className="bg-white">
           <div className={`h-1 ${SECTION_GAP_BG}`} />
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-[#191919]">
-                최근 검색어
-              </h2>
-              {hasRecentKeywords && (
-                <button
-                  type="button"
-                  onClick={onClearRecentKeywords}
-                  className="text-[12px] font-normal text-[#B5B5B5] underline"
-                >
-                  전체삭제
-                </button>
-              )}
-            </div>
-
-            <div className="mt-3">
-              {!hasRecentKeywords ? (
-                <p className="text-[14px] text-[#B9B9B9]">
-                  검색 내역이 없어요.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-3">
-                  {recentKeywords.slice(0, 10).map((k) => (
-                    <li
-                      key={k.keywordId}
-                      className="flex items-center justify-between"
-                    >
-                      <button
-                        type="button"
-                        className="text-left text-[14px] text-[#191919] flex-1"
-                        onClick={() => runSearch(k.keyword)}
-                      >
-                        {k.keyword}
-                      </button>
-
-                      <button
-                        type="button"
-                        aria-label="최근 검색어 삭제"
-                        onClick={() => onDeleteRecentKeyword(k.keywordId)}
-                        className="w-6 h-6 flex items-center justify-center"
-                      >
-                        <img src={recentCancel} alt="삭제" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-
+          <RecentKeywordsSection
+            items={recentKeywords}
+            onSelect={(kw) => runSearch(kw)}
+            onDeleteOne={onDeleteRecentKeyword}
+            onDeleteAll={onClearRecentKeywords}
+          />
+          
           <div className={`h-1 ${SECTION_GAP_BG}`} />
 
           <div className="px-4 py-4">
