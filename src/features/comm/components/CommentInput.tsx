@@ -7,6 +7,7 @@ type CommentInputProps = {
   replyTo?: string | null;
   onClearReply?: () => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
+  placeholderText?: string;
 };
 
 type ApiResponse<T> = {
@@ -152,6 +153,7 @@ export default function CommentInput({
   onSubmit,
   replyTo,
   onClearReply,
+  placeholderText,
 }: CommentInputProps) {
   const [text, setText] = useState("");
   const [suggestions, setSuggestions] = useState<MentionUser[]>([]);
@@ -367,7 +369,9 @@ export default function CommentInput({
               "
             >
               {text.length === 0 ? (
-                <span className="text-[#B5B5B5]">게시글에 댓글 남기기</span>
+                <span className="text-[#B5B5B5]">
+                  {placeholderText ?? "게시글에 댓글 남기기"}
+                </span>
               ) : (
                 renderHighlightedText(text)
               )}

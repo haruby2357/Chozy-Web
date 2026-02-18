@@ -7,17 +7,15 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/auth": {
+      "/api": {
         target: "https://chozy.net",
-        changeOrigin: true,
-        secure: true,
+        changeOrigin: true, // CORS 에러 해결을 위한 설정
+        secure: false,
+        // 주소에서 "/api"를 제거하고 백엔드 서버에 전달합니다.
+        // 예: /api/auth/check-id -> https://chozy.net/auth/check-id
+        rewrite: (path) => path.replace(/^\/api/, ""),
       },
-      "/home": {
-        target: "https://chozy.net",
-        changeOrigin: true,
-        secure: true,
-      },
-      "/community": {
+      "/me": {
         target: "https://chozy.net",
         changeOrigin: true,
         secure: true,

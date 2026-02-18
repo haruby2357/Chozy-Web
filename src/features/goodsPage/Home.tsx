@@ -16,6 +16,8 @@ import pet from "../../assets/goodsPage/category/pet.svg";
 import electronics from "../../assets/goodsPage/category/electronics.svg";
 import car from "../../assets/goodsPage/category/car.svg";
 
+import { getPopularKeywords } from "../../api/domains/goodsPage/topKeyword/api";
+
 type ApiCategory =
   | "FASHION"
   | "BEAUTY"
@@ -37,13 +39,6 @@ type ApiProduct = {
   reviewCount: number;
   deliveryFee: number;
   status: boolean;
-};
-
-type ApiKeyword = {
-  keywordId: number;
-  keyword: string;
-  previousRank?: number;
-  currentRank?: number;
 };
 
 type ApiResponse<T> = {
@@ -84,11 +79,9 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    // 인기 검색어 불러오기
     (async () => {
       try {
-        const res = await fetch("/home/search/popular");
-        const data: ApiResponse<ApiKeyword[]> = await res.json();
+        const data = await getPopularKeywords();
         setPopularKeywords(
           (data.result ?? []).slice(0, 10).map((k) => k.keyword),
         );

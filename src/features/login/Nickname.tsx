@@ -1,13 +1,24 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { completeOnboarding, signUp } from "../../api/auth";
 import DetailHeader from "../../components/DetailHeader";
 import SubmitButton from "../../components/SubmitButton";
 import cancelIcon from "../../assets/all/cancel.svg";
 
 export default function Nickname() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [nickname, setNickname] = useState("");
   const [nicknameErrors, setNicknameErrors] = useState<string[]>([]);
+
+  const [, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+    icon?: string;
+  } | null>(null);
+
+  const prevData = location.state; // SignUp.tsx에서 넘어온 데이터
 
   const validateNickname = (value: string) => {
     const errors: string[] = [];
@@ -40,6 +51,37 @@ export default function Nickname() {
   };
 
   const isFormValid = nickname.length > 0 && nicknameErrors.length === 0;
+
+  const handleComplete = async () => {
+    if (!isFormValid) return;
+
+    try {
+      console.log("보낼 데이터:", { ...prevData, nickname });
+      if (prevData) {
+        // Case 1: 내부 회원가입 경로 (SignUp.tsx에서 데이터를 들고 온 경우)
+        const signUpData = { ...prevData, nickname: nickname };
+        const response = await signUp(signUpData);
+
+        if (response.success === true || response.code === 1000)
+          navigate("/login/complete");
+      } else {
+        // Case 2: 카카오 로그인 경로 (이전 데이터가 없는 경우)
+        const response = await completeOnboarding(nickname);
+
+        if (response.success === true || response.code === 1000)
+          navigate("/login/complete");
+      }
+    } catch (error: any) {
+      console.error("에러 발생:", error);
+      const errorCode = error.response?.data?.code;
+      // 명세서의 에러 코드 처리
+      if (errorCode === 4094) {
+        setToast({ message: "이미 사용 중인 닉네임입니다.", type: "error" });
+      } else {
+        alert("문제가 발생했습니다. 다시 시도해주세요.");
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-white relative">
@@ -104,7 +146,7 @@ export default function Nickname() {
       <div className="absolute bottom-5 left-4 right-4">
         <SubmitButton
           label="완료하기"
-          onSubmit={() => navigate("/login/complete")}
+          onSubmit={handleComplete}
           isValid={isFormValid}
           className="relative w-full"
         />

@@ -1,36 +1,52 @@
 import { useRef, useState } from "react";
 import dummyProfile from "../../../../assets/all/dummyProfile.svg";
 import toastmsg from "../../../../assets/community/toastmsg.svg";
-// 차단한 계정 컴포넌트
-// 명세서 전 더미데이터
+import { mypageApi } from "../../../../api";
 
 type AccountProps = {
+  targetUserId: number;
   name: string;
   userID: string;
+  profileImage?: string | null;
+  onUnblocked?: (targetUserId: number) => void;
 };
 
-export default function Account({ name, userID }: AccountProps) {
+export default function Account({
+  targetUserId,
+  name,
+  userID,
+  profileImage,
+  onUnblocked,
+}: AccountProps) {
   const [showToast, setShowToast] = useState(false);
+  const [loading, setLoading] = useState(false);
   const toastTimer = useRef<number | null>(null);
 
-  const handleUnblock = () => {
-    // TODO: 나중에 차단 해제 API 호출
+  const handleUnblock = async () => {
+    if (loading) return;
+    setLoading(true);
 
-    setShowToast(true);
+    try {
+      const data = await mypageApi.unblockUser(targetUserId);
 
-    if (toastTimer.current) {
-      clearTimeout(toastTimer.current);
+      if (data.code !== 1000) throw new Error(data.message);
+
+      onUnblocked?.(targetUserId);
+
+      setShowToast(true);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = window.setTimeout(() => setShowToast(false), 2000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-
-    toastTimer.current = window.setTimeout(() => {
-      setShowToast(false);
-    }, 2000);
   };
 
   return (
-    <div className="px-4 py-3 flex flex-row items-center justify-between">
+    <div className="relative px-4 py-3 flex flex-row items-center justify-between">
       <div className="flex flex-row items-center justify-center gap-3">
-        <img src={dummyProfile} alt="프로필 이미지" />
+        <img src={profileImage ?? dummyProfile} alt="프로필 이미지" />
         <div className="flex flex-col justify-center gap-[2px]">
           <span className="text-[#191919] text-[16px] font-medium">{name}</span>
           <span className="text-[#B5B5B5] text-[12px]">{userID}</span>
@@ -45,7 +61,7 @@ export default function Account({ name, userID }: AccountProps) {
       </button>
       {/* 토스트 메시지 */}
       <div
-        className={`fixed left-0 right-0 bottom-0 z-[1000] p-4 transition-all duration-200
+        className={`absolute left-0 right-0 bottom-0 z-[1000] p-4 transition-all duration-200
           ${
             showToast
               ? "opacity-100 translate-y-0"
@@ -53,7 +69,7 @@ export default function Account({ name, userID }: AccountProps) {
           }
         `}
       >
-        <div className="mx-auto w-[358px]">
+        <div className="w-full">
           <div className="flex items-center gap-[10px] bg-[#787878] rounded-[4px] p-4">
             <img src={toastmsg} alt="토스트 아이콘" className="w-6 h-6" />
             <span className="text-white text-[16px]">

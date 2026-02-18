@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { sendVerificationEmail, verifyEmail } from "../../api/auth";
+
 import DetailHeader from "../../components/DetailHeader";
 import SubmitButton from "../../components/SubmitButton";
 import Toast from "../../components/Toast";
@@ -52,14 +53,25 @@ export default function EmailVerification() {
     }
   };
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     if (/.+@.+/.test(email) && !isCodeSending) {
-      setIsCodeSending(true);
-      setShowCodeInput(true);
-      setTimeRemaining(300); // 5분(300초) 제한 시간 시작
-      setTimeout(() => {
-        setIsCodeSending(false);
-      }, 3000);
+      try {
+        setIsCodeSending(true);
+        // 실제 서버에 인증번호 발송 요청
+        const data = await sendVerificationEmail(email);
+
+        // 3. 성공 시 UI 업데이트 (명세서의 code 1000 확인)
+        if (data.success && data.code === 1000) {
+          setShowCodeInput(true);
+          setTimeRemaining(300);
+          console.log("인증번호를 발송했습니다.");
+        }
+      } catch (error) {
+        setToast({ message: "인증번호 발송에 실패했습니다.", type: "error" });
+      } finally {
+        setTimeout(() => setIsCodeSending(false), 3000);
+        setTimeout(() => setToast(null), 2000);
+      }
     }
   };
 
@@ -71,27 +83,32 @@ export default function EmailVerification() {
     setVerificationCode("");
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (email && verificationCode) {
-      // TODO: 실제 인증 로직 (서버 API 호출)
-      // 임시로 "123456"이 정답이라고 가정
-      const correctCode = "123456";
+      try {
+        // 실제 인증 로직 호출 (문자열인 코드를 숫자로 변환)
+        const data = await verifyEmail(email, verificationCode);
 
-      if (verificationCode === correctCode) {
-        setIsVerified(true);
-        setToast({
-          message: "인증을 완료했어요.",
-          type: "success",
-          icon: checkCircleIcon,
-        });
-        setTimeout(() => {
-          setToast(null);
-        }, 2000);
-      } else {
-        setToast({ message: "인증번호가 일치하지 않습니다.", type: "error" });
-        setTimeout(() => {
-          setToast(null);
-        }, 2000);
+        // 성공 처리
+        if (data.success && data.code === 1000) {
+          setIsVerified(true);
+          setToast({
+            message: "인증을 완료했어요.",
+            type: "success",
+            icon: checkCircleIcon,
+          });
+          setTimeout(() => setToast(null), 2000);
+        } else {
+          // 인증 실패 처리
+          setIsVerified(false);
+          setToast({ message: "인증번호가 일치하지 않습니다.", type: "error" });
+          setTimeout(() => setToast(null), 2000);
+        }
+      } catch (error: any) {
+        // 에러 처리
+        setIsVerified(false);
+        setToast({ message: "인증 중 오류가 발생했습니다.", type: "error" });
+        setTimeout(() => setToast(null), 2000);
       }
     }
   };
@@ -244,7 +261,9 @@ export default function EmailVerification() {
         <Toast toast={toast} />
         <SubmitButton
           label="다음"
-          onSubmit={() => navigate("/login/signup")}
+          onSubmit={() =>
+            navigate("/login/signup", { state: { email: email } })
+          }
           isValid={isVerified}
           className="relative w-full"
         />

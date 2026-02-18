@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { checkIdDuplicate } from "../../api/auth";
 import DetailHeader from "../../components/DetailHeader";
 import SubmitButton from "../../components/SubmitButton";
 import Toast from "../../components/Toast";
@@ -11,6 +12,7 @@ import eyeOffIcon from "../../assets/login/eye-off.svg";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -29,6 +31,24 @@ export default function SignUp() {
     type: "success" | "error";
     icon?: string;
   } | null>(null);
+
+  const verifiedEmail = location.state?.email || "";
+
+  const handleNext = () => {
+    // 수집한 모든 정보를 다음 페이지로 넘깁니다.
+    navigate("/login/nickname", {
+      state: {
+        loginId: userId,
+        password: password,
+        email: verifiedEmail,
+
+        // TODO: 전화번호&이름&국가 정보 받아오면 넘겨주기
+        name: "사용자 이름",
+        phoneNumber: "01012345678",
+        country: "KOREA", // 명세서 기본 국가 정보
+      },
+    });
+  };
 
   const handleUserIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -106,30 +126,32 @@ export default function SignUp() {
     setPasswordConfirm("");
   };
 
-  const handleCheckDuplicate = () => {
-    if (!userId) return;
+  const handleCheckDuplicate = async () => {
+    // 실제 중복 확인 로직 (서버 API 호출)
+    try {
+      const data = await checkIdDuplicate(userId);
 
-    // TODO: 실제 중복 확인 로직 (서버 API 호출)
-    // 임시로 "test"가 중복이라고 가정
-    const duplicatedIds = ["test", "admin", "user"];
-
-    if (duplicatedIds.includes(userId.toLowerCase())) {
-      setIsIdDuplicated(true);
-      setToast({ message: "이미 사용 중인 아이디에요.", type: "error" });
-      setTimeout(() => {
-        setToast(null);
-      }, 2000);
-    } else {
-      setIsIdDuplicated(false);
-      setIsIdChecked(true);
+      if (data.success && data.result.available) {
+        // 명세서의 available 필드 확인
+        setIsIdDuplicated(false);
+        setIsIdChecked(true);
+        setToast({
+          message: "사용할 수 있는 아이디에요.",
+          type: "success",
+          icon: checkCircleIcon,
+        });
+      } else {
+        setIsIdDuplicated(true);
+        setIsIdChecked(false);
+        setToast({ message: "이미 사용 중인 아이디에요.", type: "error" });
+      }
+    } catch (error) {
       setToast({
-        message: "사용할 수 있는 아이디에요.",
-        type: "success",
-        icon: checkCircleIcon,
+        message: "서버와 통신 중 오류가 발생했습니다.",
+        type: "error",
       });
-      setTimeout(() => {
-        setToast(null);
-      }, 2000);
+    } finally {
+      setTimeout(() => setToast(null), 2000);
     }
   };
 
@@ -318,7 +340,7 @@ export default function SignUp() {
         <Toast toast={toast} />
         <SubmitButton
           label="다음"
-          onSubmit={() => navigate("/login/nickname")}
+          onSubmit={handleNext}
           isValid={isFormValid}
           className="relative w-full"
         />

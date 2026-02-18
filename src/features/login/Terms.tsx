@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SubmitButton from "../../components/SubmitButton";
 import backIcon from "../../assets/all/back.svg";
+import termsIcon from "../../assets/login/terms.svg";
 import emptyCheckIcon from "../../assets/login/empty-check.svg";
 import filledCheckIcon from "../../assets/login/filled-check.svg";
 import moreIcon from "../../assets/login/more.svg";
@@ -43,7 +44,7 @@ export default function Terms() {
         {/* 본문 */}
         <div className="flex-1 flex flex-col gap-25">
           <div className="flex justify-center">
-            <div className="w-40 h-40 bg-gray-300 rounded" />
+            <img src={termsIcon} className="w-25 h-25" />
           </div>
 
           {/* 약관 체크박스 */}

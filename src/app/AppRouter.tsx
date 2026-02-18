@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom";
+import Onboarding from "../features/login/Onboarding";
 import Login from "../features/login/Login";
+import KakaoCallback from "../features/login/KakaoCallback";
 import Terms from "../features/login/Terms";
 import ServiceTerms from "../features/login/ServiceTerms";
 import PrivacyPolicy from "../features/login/PrivacyPolicy";
@@ -23,12 +25,17 @@ import LikePost from "../features/myPage/components/setting/LikePost";
 import BlockedAccounts from "../features/myPage/components/setting/BlockedAccounts";
 import WithdrawAccount from "../features/myPage/components/setting/WithdrawAccount";
 import WithdrawComplete from "../features/myPage/components/setting/WithdrawComplete";
+import FavoritePage from "../features/favorites/FavoritePage";
 
 export default function AppRouter() {
   return (
     <Routes>
+      {/* 온보딩 페이지 라우팅 */}
+      <Route path="/onboarding" element={<Onboarding />} />
+
       {/* 로그인 페이지 라우팅 */}
       <Route path="/login" element={<Login />} />
+      <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
       <Route path="/login/terms" element={<Terms />} />
       <Route path="/login/terms/service" element={<ServiceTerms />} />
       <Route path="/login/terms/privacy" element={<PrivacyPolicy />} />
@@ -55,8 +62,10 @@ export default function AppRouter() {
       <Route path="/community/post-write" element={<PostWrite />} />
       <Route path="/review-write" element={<ReviewWrite />} />
 
+      {/* 찜 페이지 라우팅 */}
+      <Route path="/heart" element={<FavoritePage />} />
+
       {/* 개인 페이지 라우팅 */}
-      <Route path="/heart" element={<Home />} />
       <Route path="/mypage" element={<MyMain />} />
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/mypage/setting" element={<Setting />} />
@@ -64,6 +73,8 @@ export default function AppRouter() {
       <Route path="/mypage/blocked" element={<BlockedAccounts />} />
       <Route path="/mypage/withdraw" element={<WithdrawAccount />} />
       <Route path="/mypage/withdraw/complete" element={<WithdrawComplete />} />
+      <Route path="/mypage/service" element={<ServiceTerms />} />
+      <Route path="/mypage/privacy" element={<PrivacyPolicy />} />
     </Routes>
   );
 }
