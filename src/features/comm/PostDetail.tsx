@@ -40,6 +40,10 @@ import {
 
 import { followUser, unfollowUser } from "../../api/domains/follow";
 import { createFeedComment } from "../../api/domains/community/comments/api";
+import {
+  createRepost,
+  deleteRepost,
+} from "../../api/domains/community/actions/api";
 
 type ToastState = { text: string; icon?: string } | null;
 
@@ -419,58 +423,30 @@ export default function PostDetail() {
     if (!detail) return;
 
     const originFeedId = detail.feed.feedId;
-    const contentType = detail.feed.type === "REVIEW" ? "REVIEW" : "POST";
 
     try {
       if (!isReposted) {
-        const res = await fetch("/community/repost", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            kind: "REPOST",
-            content_type: contentType,
-            originalFeedId: originFeedId,
-          }),
-        });
-        if (!res.ok) throw new Error("repost failed");
+        const res = await createRepost(originFeedId);
+        if (res.code !== 1000) throw new Error(res.message ?? "리포스트 실패");
 
         showToast("게시글을 리포스트했어요.", toastmsg);
 
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                feed: {
-                  ...prev.feed,
-                  myState: { ...prev.feed.myState, isreposted: true },
-                },
-              }
-            : prev,
-        );
+        // ✅ 서버 값으로 counts / myState 동기화
+        await fetchDetail();
         return;
       }
 
-      const res = await fetch(`/community/repost/${originFeedId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("repost cancel failed");
+      const res = await deleteRepost(originFeedId);
+      if (res.code !== 1000)
+        throw new Error(res.message ?? "리포스트 취소 실패");
 
       showToast("리포스트를 취소했어요.");
 
-      setDetail((prev) =>
-        prev
-          ? {
-              ...prev,
-              feed: {
-                ...prev.feed,
-                myState: { ...prev.feed.myState, isreposted: false },
-              },
-            }
-          : prev,
-      );
-    } catch (e) {
+      // ✅ 서버 값으로 counts / myState 동기화
+      await fetchDetail();
+    } catch (e: any) {
       console.error(e);
-      showToast("처리 중 오류가 발생했어요.");
+      showToast(e?.message ?? "처리 중 오류가 발생했어요.");
     }
   };
 
