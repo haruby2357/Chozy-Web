@@ -9,6 +9,8 @@ import Textarea from "./components/Textarea";
 import HashtagInput from "./components/HashtagInput";
 import StarRating from "./components/StarRating";
 import ImageUpload from "./components/ImageUpload";
+import { getUserIdFromToken } from "../../api/auth";
+import { createReview } from "../../api/domains/community/actions";
 
 export default function ReviewWrite() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function ReviewWrite() {
   const [review, setReview] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [title, setTitle] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [toast, setToast] = useState<{
     message: string;
@@ -26,57 +29,42 @@ export default function ReviewWrite() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async () => {
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      showToast("로그인 정보가 필요합니다.");
+      return;
+    }
+
     if (!isFormValid() || isLoading) return;
 
     setIsLoading(true);
     try {
-      // 이미지 객체 생성
-      const imgArray = images.map((image) => ({
-        fileName: image.name,
-        contentType: image.type,
-      }));
+      // vendor 판단
+      const url = new URL(productLink);
+      const vendor = url.hostname.includes("coupang.com") ? "쿠팡" : "알리";
 
       const requestBody = {
-        productUrl: productLink,
-        rating: rating,
+        title: title,
         content: review,
-        img: imgArray,
+        vendor: vendor,
+        rating: rating,
+        productUrl: productLink,
+        hashTags: hashtags,
+        img: [],
       };
 
-      const response = await fetch("/community/reviews/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.isSuccess) {
+      const data = await createReview(userId, requestBody);
+      if (data.success || data.code === 1000) {
         setShowSuccess(true);
-        // 게시글 상세 페이지로 이동
         setTimeout(() => {
-          navigate(`/community/feeds/${data.result.reviewId}/detail`);
+          const feedId = data.result.feedId;
+          navigate(`/community/feeds/${feedId}`);
         }, 2000);
       } else {
-        setToast({
-          message: data.message || "리뷰 게시에 실패했습니다.",
-          type: "error",
-        });
-        setTimeout(() => setToast(null), 3000);
+        showToast(data.message || "리뷰 게시에 실패했습니다.");
       }
     } catch (error) {
-      console.error("Error submitting review:", error);
-      setToast({
-        message: "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
-        type: "error",
-      });
-      setTimeout(() => setToast(null), 3000);
+      showToast("네트워크 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +73,7 @@ export default function ReviewWrite() {
   // 필수 항목 검증 함수
   const isFormValid = (): boolean => {
     return (
+      title.trim() !== "" &&
       productLink !== "" &&
       isValidProductLink(productLink) &&
       rating !== 0 &&
@@ -95,8 +84,11 @@ export default function ReviewWrite() {
   const isValidProductLink = (link: string): boolean => {
     if (!link) return false;
     try {
-      new URL(link);
-      return true;
+      const url = new URL(link);
+      // 도메인만 간단하게 체크
+      const isCoupang = url.hostname.includes("coupang.com");
+      const isAli = url.hostname.includes("aliexpress.com");
+      return isCoupang || isAli;
     } catch {
       return false;
     }
@@ -113,12 +105,31 @@ export default function ReviewWrite() {
     handleResizeHeight();
   }, [review]);
 
+  const showToast = (message: string, type: "success" | "error" = "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   return (
     <div className="w-full min-h-screen bg-white pb-20">
       <DetailHeader title="리뷰 작성" />
 
       {/* Content */}
       <div className="flex flex-col px-4 py-4 space-y-6">
+        {/* 상품 제목 입력란 추가 */}
+        <div className="flex flex-col">
+          <label className="flex text-zinc-900 text-base font-medium mb-3 gap-1">
+            상품 제목 <span className="text-rose-900">*</span>
+          </label>
+          <input
+            type="text"
+            placeholder="상품명을 입력해 주세요."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="h-12 w-full px-3 border border-[#DADADA] rounded text-sm focus:outline-none focus:border-[#800025] caret-rose-900"
+          />
+        </div>
+
         {/* 상품 링크 */}
         <div className="flex flex-col">
           <label className="flex text-zinc-900 text-base font-medium font-['Pretendard'] mb-3 gap-1">
