@@ -16,6 +16,8 @@ import type {
 import { getHomeProducts } from "../../api/domains/goodsPage";
 import type { HomeProductItem } from "../../api/domains/goodsPage";
 
+import { setLike } from "../../api/domains/favorite/api";
+
 type ApiCategory =
   | "FASHION"
   | "BEAUTY"
@@ -85,6 +87,10 @@ export default function SearchResult() {
   const sort = (searchParams.get("sort") ?? "RELEVANCE") as SortKey;
 
   const [productList, setProductList] = useState<ApiProduct[]>([]);
+  const productListRef = useRef<ApiProduct[]>([]);
+  useEffect(() => {
+    productListRef.current = productList;
+  }, [productList]);
   const [loading, setLoading] = useState(false);
 
   // 필터 바텀시트 테스트용 상태(DEV ONLY)
@@ -259,12 +265,29 @@ export default function SearchResult() {
   }, [hasNext, loading, loadingMore]);
 
   // 좋아요 토글(서버 연동 전): status 토글
-  const handleToggleLike = (productId: number) => {
-    setProductList((prev) =>
-      prev.map((p) =>
-        p.productId === productId ? { ...p, status: !p.status } : p,
-      ),
+  const handleToggleLike = async (productId: number) => {
+    const current = productListRef.current.find(
+      (p) => p.productId === productId,
     );
+    if (!current) return;
+
+    const next = !current.status;
+
+    // optimistic UI
+    setProductList((prev) =>
+      prev.map((p) => (p.productId === productId ? { ...p, status: next } : p)),
+    );
+
+    try {
+      await setLike(productId, next);
+    } catch {
+      // rollback
+      setProductList((prev) =>
+        prev.map((p) =>
+          p.productId === productId ? { ...p, status: !next } : p,
+        ),
+      );
+    }
   };
 
   const isEmpty = !loading && productList.length === 0;

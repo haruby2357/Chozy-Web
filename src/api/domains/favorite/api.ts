@@ -1,5 +1,5 @@
 import axiosInstance from "../../axiosInstance";
-import type { LikeItem, LikesResponse } from "./types";
+import type { LikeItem, LikesResponse, ApiResponse } from "./types";
 
 function getUserIdFromTokenOrThrow(): number {
   const token = localStorage.getItem("accessToken");
@@ -46,12 +46,12 @@ export async function getLikes(query: LikesQuery = {}): Promise<LikeItem[]> {
   return data.result.result.items;
 }
 
-export async function setLike(productId: number, like: boolean): Promise<void> {
-  const userId = getUserIdFromTokenOrThrow();
+export const setLike = async (productId: number, like: boolean) => {
+  const { data } = await axiosInstance.post<ApiResponse<string>>("/likes", {
+    productId,
+    like,
+  });
 
-  await axiosInstance.post(
-    "/likes",
-    { productId, like },
-    { params: { userId } },
-  );
-}
+  if (!data.success) throw new Error(data.message);
+  return data;
+};

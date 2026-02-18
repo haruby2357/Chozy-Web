@@ -7,6 +7,7 @@ import Category from "./components/Category";
 import SearchBar from "../../components/SearchBar";
 import Product from "./components/Product";
 import ScrollToTop from "./components/ScrollToTop";
+import { setLike } from "../../api/domains/favorite/api";
 
 import cloth from "../../assets/goodsPage/category/cloth.svg";
 import beauty from "../../assets/goodsPage/category/beauty.svg";
@@ -80,17 +81,30 @@ function Home() {
 
       const result = data.result.result;
 
-      const mappedItems: ApiProduct[] = (result.items ?? []).map((p: any) => ({
-        productId: p.productId,
-        vendor: p.vendor,
-        name: p.name,
-        originalPrice: p.originalPrice,
-        discountRate: p.discountRate,
-        imageUrl: p.imageUrl,
-        productUrl: p.productUrl,
-        status: !!p.isFavorited,
-      }));
+      const mappedItems: ApiProduct[] = (result.items ?? []).map((p: any) => {
+        const raw = p.isFavorited;
 
+        const isFavorited =
+          typeof raw === "boolean"
+            ? raw
+            : typeof raw === "number"
+              ? raw === 1
+              : typeof raw === "string"
+                ? raw.toLowerCase() === "true"
+                : false;
+
+        return {
+          productId: p.productId,
+          vendor: p.vendor,
+          name: p.name,
+          originalPrice: p.originalPrice,
+          discountRate: p.discountRate,
+          imageUrl: p.imageUrl,
+          productUrl: p.productUrl,
+          status: isFavorited,
+        };
+      });
+      
       setProductList((prev) => {
         const next = [...prev, ...mappedItems];
         const uniq = new Map<number, (typeof next)[number]>();
@@ -146,12 +160,26 @@ function Home() {
   }, [page, hasNext]);
 
   // 하트 토글(서버 연동 전): status 토글
-  const handleToggleLike = (productId: number) => {
+  const handleToggleLike = async (productId: number) => {
+    let next = false;
+
     setProductList((prev) =>
-      prev.map((item) =>
-        item.productId === productId ? { ...item, status: !item.status } : item,
-      ),
+      prev.map((p) => {
+        if (p.productId !== productId) return p;
+        next = !p.status; // Home에서 찜 상태를 status로 들고 있는 경우
+        return { ...p, status: next };
+      }),
     );
+
+    try {
+      await setLike(productId, next);
+    } catch {
+      setProductList((prev) =>
+        prev.map((p) =>
+          p.productId === productId ? { ...p, status: !next } : p,
+        ),
+      );
+    }
   };
 
   return (
