@@ -1,7 +1,7 @@
 // Nav
 // 현재 pathname을 기준으로 활성 탭 판단하여 아이콘 변경
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import homeOn from "../assets/nav/home-on.svg";
 import homeOff from "../assets/nav/home-off.svg";
@@ -58,8 +58,8 @@ export default function Nav({ scrollTargetSelector = "" }: NavProps) {
       lastYRef.current = y;
     };
 
-    target.addEventListener("scroll", onScroll as any, { passive: true });
-    return () => target.removeEventListener("scroll", onScroll as any);
+    target.addEventListener("scroll", onScroll , { passive: true });
+    return () => target.removeEventListener("scroll", onScroll );
   }, [scrollTargetSelector]);
 
   const items: NavItem[] = [
@@ -109,6 +109,8 @@ export default function Nav({ scrollTargetSelector = "" }: NavProps) {
     }
   };
 
+  const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem("accessToken");
   return (
     <nav
       className={[
@@ -126,6 +128,14 @@ export default function Nav({ scrollTargetSelector = "" }: NavProps) {
                 <NavLink
                   to={item.to}
                   onClick={(e) => {
+                    // 찜 탭인데 로그인 안 된 경우
+                    if (item.key === "heart" && !isLoggedIn) {
+                      e.preventDefault(); 
+                      navigate("/login"); 
+                      return;
+                    }
+
+                    // 이미 활성 탭이면 스크롤 위로
                     if (isActive) {
                       e.preventDefault();
                       scrollTop();
