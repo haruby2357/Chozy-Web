@@ -31,7 +31,6 @@ import {
   type UiFeedDetailResult,
   type UiCommentItem,
   type Reaction,
-  type UiFeedUser,
 } from "../../api/domains/community/feedDetail";
 import {
   toggleFeedReaction,
@@ -39,7 +38,8 @@ import {
   toggleCommentReaction,
 } from "../../api/domains/community/actions/api";
 
-// import { followUser, unfollowUser } from "../../api/domains/follow";
+import { followUser, unfollowUser } from "../../api/domains/follow";
+import { createFeedComment } from "../../api/domains/community/comments/api";
 
 type ToastState = { text: string; icon?: string } | null;
 
@@ -190,36 +190,36 @@ export default function PostDetail() {
     });
   };
 
-  const handleAddComment = (text: string) => {
-    const me: UiFeedUser = {
-      profileImg: feed.user.profileImg,
-      userName: feed.user.userName,
-      userId: feed.user.userId,
-    };
+  const handleAddComment = async (text: string) => {
+    if (!text.trim()) return;
 
-    const newItem: UiCommentItem = {
-      commentId: Date.now(),
-      user: me,
-      quote: replyTarget?.loginId ?? "",
-      content: text,
-      createdAt: new Date().toISOString(),
-      mentions: [],
-      replyTo: null,
-      counts: { comments: 0, likes: 0, dislikes: 0, quotes: 0 },
-      myState: { reaction: "NONE", isbookmarked: false, isreposted: false },
-      comment: [],
-    };
-
-    if (replyTarget) {
-      setComments((prev) =>
-        addChildReply(prev, replyTarget.parentCommentId, newItem),
-      );
-      setReplyTarget(null);
+    if (!localStorage.getItem("accessToken")) {
+      navigate("/login");
       return;
     }
 
-    shouldScrollRef.current = true;
-    setComments((prev) => [...prev, newItem]);
+    try {
+      const body = {
+        content: text,
+        parentCommentId: replyTarget ? replyTarget.parentCommentId : null,
+        replyToUserId: replyTarget ? replyTarget.loginId : null,
+        mentions: [],
+      };
+
+      const data = await createFeedComment(numericFeedId, body);
+
+      if (data.code !== 1000) {
+        throw new Error(data.message ?? "댓글 작성 실패");
+      }
+
+      setReplyTarget(null);
+      shouldScrollRef.current = true;
+
+      await fetchDetail();
+    } catch (e) {
+      console.error(e);
+      showToast("댓글 작성에 실패했어요.");
+    }
   };
 
   const inputPlaceholder = replyTarget
@@ -234,34 +234,33 @@ export default function PostDetail() {
   // ------------------------------
   //  팔로우 토글
   // ------------------------------
-  type FollowStatus = "FOLLOWING" | "NONE";
-  type FollowResponse = { targetUserId: string; followStatus: FollowStatus };
+  // const isFollowing = !!feed.myState.isfollowing;
 
   const handleToggleFollow = async () => {
-    const targetUserId = feed.user.userId;
+    const targetPk = feed.user.userPk;
+    if (!targetPk) return;
 
     try {
-      const method = isFollowing ? "DELETE" : "POST";
+      if (isFollowing) {
+        const res = await unfollowUser(targetPk); // DELETE
+        const next = res.result?.followStatus === "FOLLOWING";
+        setIsFollowing(next);
+      } else {
+        const res = await followUser(targetPk); // POST
+        const next = res.result?.followStatus === "FOLLOWING";
+        setIsFollowing(next);
+      }
 
-      const res = await fetch(`/users/me/followings/${targetUserId}`, {
-        method,
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error("toggle follow failed");
-
-      const data: FollowResponse = await res.json();
-
-      const nextIsFollowing = data.followStatus === "FOLLOWING";
-      setIsFollowing(nextIsFollowing);
-
-      showToast(
-        nextIsFollowing
-          ? `@${feed.user.userId} 님을 팔로우했어요.`
-          : "팔로우를 취소했어요.",
-        nextIsFollowing ? toastmsg : undefined,
-      );
-    } catch (e) {
+      await fetchDetail();
+    } catch (e: any) {
       console.error(e);
+
+      if (e.response?.status === 409) {
+        setIsFollowing(true);
+        await fetchDetail();
+        return;
+      }
+
       showToast("처리 중 오류가 발생했어요.");
     }
   };

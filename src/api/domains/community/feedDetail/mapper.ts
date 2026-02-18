@@ -21,6 +21,7 @@ export function pickIsMine(feed: ApiFeed): boolean {
 
 function mapApiUser(u: ApiFeedUser): UiFeedUser {
   return {
+    userPk: u.userPk ?? 0,
     profileImg: u.profileImageUrl ?? dummyProfile,
     userName: u.name,
     userId: u.userId,
@@ -53,6 +54,7 @@ function mapFeed(api: ApiFeed): UiFeedDetail {
       reaction: api.myState.reactionType,
       isbookmarked: api.myState.bookmarked,
       isreposted: api.myState.reposted,
+      isfollowing: api.myState.following,
     },
   } as const;
 
@@ -151,6 +153,7 @@ function mapQuote(q: any): UiQuote {
   return {
     feedId: q.feedId,
     user: {
+      userPk: q.user?.userPk ?? 0,
       profileImg: q.user?.profileImageUrl ?? "",
       userName: q.user?.name ?? "",
       userId: q.user?.userId ?? "",
@@ -173,6 +176,7 @@ export function toUiFeedDetail(apiFeed: any): UiFeedDetail {
     isMine: !!apiFeed.mine,
 
     user: {
+      userPk: apiFeed.user?.userPk ?? 0,
       profileImg: apiFeed.user?.profileImageUrl ?? "",
       userName: apiFeed.user?.name ?? "",
       userId: apiFeed.user?.userId ?? "",

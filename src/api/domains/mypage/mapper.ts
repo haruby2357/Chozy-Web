@@ -28,6 +28,7 @@ export function toUiFeedItem(s: ServerFeedItem): UiFeedItem {
     kind: s.kind,
     isMine: s.mine ?? false,
     user: {
+      userPk: (s.user as any).userPk ?? 0,
       profileImg: s.user.profileImageUrl ?? dummyProfile,
       userName: s.user.name,
       userId: s.user.userId,
@@ -45,6 +46,7 @@ export function toUiFeedItem(s: ServerFeedItem): UiFeedItem {
     ? {
         feedId: s.contents.quote.feedId,
         user: {
+          userPk: (s.contents.quote.user as any).userPk ?? 0,
           profileImg: s.contents.quote.user.profileImageUrl ?? dummyProfile,
           userName: s.contents.quote.user.name,
           userId: s.contents.quote.user.userId,

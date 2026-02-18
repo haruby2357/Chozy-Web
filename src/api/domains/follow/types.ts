@@ -1,15 +1,14 @@
-export type FollowStatus = "FOLLOWING" | "REQUESTED" | "NONE";
+export type FollowStatus = "FOLLOWING" | "NONE";
 
 export type FollowResponse = {
   targetUserId: number;
-  followStatus: Exclude<FollowStatus, "NONE">;
-  requestId: number | null;
-  requestedAt: string | null;
+  followStatus: FollowStatus;
+  processedAt: string;
 };
 
 export type UnfollowResponse = {
   targetUserId: number;
-  followStatus: "NONE";
-  canceledRequestId: number | null;
-  processedAt: string | null;
+  followStatus: FollowStatus;
+  unfollowedAt: string | null;
+  processedAt: string;
 };

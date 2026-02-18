@@ -6,6 +6,7 @@
 export type Reaction = "LIKE" | "DISLIKE" | "NONE";
 
 export type ApiFeedUser = {
+  userPk: number;
   profileImageUrl: string | null;
   name: string;
   userId: string;
@@ -117,6 +118,7 @@ export type ApiFeedDetailResult = {
  *  UI에서 사용하는 타입
  *  ========================= */
 export type UiFeedUser = {
+  userPk: number;
   profileImg: string | null;
   userName: string;
   userId: string;
@@ -158,6 +160,7 @@ export type UiReviewContentDetail = {
 export type UiQuote = {
   feedId: number;
   user: {
+    userPk: string;
     profileImg: string;
     userName: string;
     userId: string;
