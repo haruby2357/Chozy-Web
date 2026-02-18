@@ -4,6 +4,7 @@ import SearchBar2 from "../../components/SearchBar2";
 import Sort, { type SortKey } from "./components/Sort";
 import Product from "./components/Product";
 import filter from "../../assets/all/filter.svg";
+import emptyIcon from "../../assets/all/Empty_favorite_icon.svg";
 
 import FilterSheet from "./components/filter/FIlterSheet";
 import type {
@@ -11,6 +12,8 @@ import type {
   FilterSheetState,
   PricePresetKey,
 } from "./components/filter/types";
+import { getHomeProducts } from "../../api/domains/goodsPage";
+import type { HomeProductItem } from "../../api/domains/goodsPage";
 
 type ApiCategory =
   | "FASHION"
@@ -104,6 +107,14 @@ export default function SearchResult() {
   const minRatingQ = readNum(searchParams, "minRating");
   const maxRatingQ = readNum(searchParams, "maxRating");
 
+  useEffect(() => {
+    if (category && searchParams.get("search")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("search");
+      setSearchParams(next, { replace: true });
+    }
+  }, [category, searchParams, setSearchParams]);
+
   const filterInitial: Partial<FilterSheetState> = useMemo(() => {
     const hasPrice = minPriceQ !== undefined && maxPriceQ !== undefined;
     const hasRating = minRatingQ !== undefined && maxRatingQ !== undefined;
@@ -142,33 +153,58 @@ export default function SearchResult() {
   }, [minPriceQ, maxPriceQ, minRatingQ, maxRatingQ]);
 
   // API 요청 URL 생성
-  const requestUrl = useMemo(() => {
-    const params = new URLSearchParams();
+  const request = useMemo(() => {
+    const base = {
+      sort: sort as any,
+      minPrice: minPriceQ,
+      maxPrice: maxPriceQ,
+      minRating: minRatingQ,
+      maxRating: maxRatingQ,
+    };
 
-    if (category) params.set("category", category);
-    else if (search) params.set("search", search);
-    if (sort) params.set("sort", sort);
-
-    if (minPriceQ !== undefined && maxPriceQ !== undefined) {
-      params.set("minPrice", String(minPriceQ));
-      params.set("maxPrice", String(maxPriceQ));
+    if (category) {
+      return { ...base, category };
     }
 
-    if (minRatingQ !== undefined && maxRatingQ !== undefined) {
-      params.set("minRating", String(minRatingQ));
-      params.set("maxRating", String(maxRatingQ));
+    if (searchParam) {
+      return { ...base, search: searchParam };
     }
 
-    return `/home/products?${params.toString()}`;
-  }, [category, search, sort, minPriceQ, maxPriceQ, minRatingQ, maxRatingQ]);
+    return base;
+  }, [
+    category,
+    searchParam,
+    sort,
+    minPriceQ,
+    maxPriceQ,
+    minRatingQ,
+    maxRatingQ,
+  ]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const res = await fetch(requestUrl);
-        const data: ApiResponse<ApiProduct[]> = await res.json();
-        setProductList(data.result ?? []);
+        const data = await getHomeProducts(request);
+        const items = data.result.result.items;
+
+        setProductList(
+          items.map((p: HomeProductItem) => ({
+            productId: p.productId,
+            name: p.name,
+            originalPrice: p.originalPrice,
+            discountRate: p.discountRate,
+            imageUrl: p.imageUrl,
+            productUrl: p.productUrl,
+
+            // Swagger에 없는 값은 기본값
+            rating: 0,
+            reviewCount: 0,
+            deliveryFee: 0,
+
+            status: p.isFavorited,
+          })),
+        );
       } catch (e) {
         console.error("상품 목록 로딩 실패:", e);
         setProductList([]);
@@ -176,7 +212,7 @@ export default function SearchResult() {
         setLoading(false);
       }
     })();
-  }, [requestUrl]);
+  }, [request]);
 
   const handleSortChange = (nextSort: SortKey) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -272,8 +308,8 @@ export default function SearchResult() {
 
         {isEmpty ? (
           <div className="bg-white px-4">
-            <div className="pt-[225px] flex flex-col items-center justify-center gap-10">
-              <div className="w-[100px] h-[100px] bg-[#D9D9D9]" />
+            <div className="pt-[225px] flex flex-col items-center justify-center gap-5">
+              <img src={emptyIcon} alt="빈데이터" />
               <p className="text-[16px] font-medium text-[#575757]">
                 검색 결과가 없어요.
               </p>
