@@ -5,6 +5,7 @@ export interface LikeItem {
   discountRate: number;
   imageUrl: string;
   productUrl: string;
+  status: boolean;
 }
 
 export interface LikesPage {
