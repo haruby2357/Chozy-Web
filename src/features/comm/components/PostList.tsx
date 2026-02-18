@@ -5,7 +5,6 @@ import StarRating from "./StarRating";
 import ShareBottomSheet from "./ShareBottomSheet";
 import FeedEtcSheet from "./FeedEtcSheet";
 import FeedQuoteSheet from "./FeedQuoteSheet";
-import Toast from "../../../components/Toast";
 
 import comment from "../../../assets/community/comment.svg";
 import quotation from "../../../assets/community/quotation.svg";
@@ -100,7 +99,7 @@ export default function PostList({
 
   // 공유
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
+  const [shareUrl] = useState("");
 
   const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -111,7 +110,7 @@ export default function PostList({
   const handleShare = async (feedId: number) => {
     const url = buildShareUrl(feedId);
 
-    // ✅ 모바일 + Web Share API 지원
+    // 모바일 + Web Share API 지원
     if (isMobile() && navigator.share) {
       try {
         await navigator.share({
@@ -126,11 +125,11 @@ export default function PostList({
       }
     }
 
-    // ✅ PC 또는 Web Share 미지원 → 클립보드 복사
+    // PC 또는 Web Share 미지원 → 클립보드 복사
     try {
       await navigator.clipboard.writeText(url);
 
-      showToast("링크가 복사되었습니다!"); // 🔥 네가 쓰는 토스트 함수
+      showToast("링크가 복사되었습니다!");
     } catch (e) {
       console.error(e);
       showToast("링크 복사에 실패했어요.");

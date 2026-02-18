@@ -11,7 +11,7 @@ type Props = {
   isMine: boolean;
 
   isFollowing: boolean;
-  followStatus?: FollowStatus; // ✅ 추가
+  followStatus?: FollowStatus;
 
   onToggleFollow: () => void;
   etcIcon: string;

@@ -92,7 +92,7 @@ export default function Followings({ userId, defaultTab }: Props) {
         <div className="px-4 py-6 text-[#787878]">로딩중...</div>
       ) : items.length === 0 ? (
         <div className="px-4 py-10 text-center text-[#B5B5B5]">
-          목록이 없어요.{" "}
+          목록이 없어요.
         </div>
       ) : (
         <div className="flex flex-col divide-y divide-[#F2F2F2]">
