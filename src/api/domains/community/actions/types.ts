@@ -53,3 +53,10 @@ export type ReviewRequest = {
 export type ReviewCreateResult = {
   feedId: number;
 };
+
+// 리포스트 요청/취소
+export type RepostCreateResult = {
+  feedId: number;
+};
+
+export type RepostDeleteResult = string;
