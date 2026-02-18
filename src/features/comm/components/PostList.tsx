@@ -532,7 +532,6 @@ export default function PostList({
         open={openEtc}
         onClose={() => {
           setOpenEtc(false);
-          setEtcTarget(null);
         }}
         isMine={etcTarget?.isMine ?? false}
         feedId={etcTarget?.feedId ?? 0}

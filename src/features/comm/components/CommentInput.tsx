@@ -404,7 +404,7 @@ export default function CommentInput({
             />
           </div>
 
-          <button type="button">
+          <button type="button" onClick={handleSubmit}>
             <img src={send} alt="전송" />
           </button>
         </div>
