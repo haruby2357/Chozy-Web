@@ -3,8 +3,6 @@ import DetailHeader from "../../../components/DetailHeader";
 import FollowTabBar from "./followings/FollowTabBar";
 import type { FollowTabKey } from "./followings/FollowTabBar";
 
-import toastmsg from "../../../assets/community/toastmsg.svg";
-
 import FollowAccount from "./followings/FollowAccount"; // 경로 맞게 수정
 import type { FollowStatus } from "./followings/FollowAccount";
 
