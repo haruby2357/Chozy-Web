@@ -27,6 +27,7 @@ type ApiCategory =
 
 type ApiProduct = {
   productId: number;
+  vendor: string;
   name: string;
   originalPrice: number;
   discountRate: number;
@@ -182,6 +183,7 @@ export default function SearchResult() {
         setProductList(
           items.map((p: HomeProductItem) => ({
             productId: p.productId,
+            vendor: p.vendor,
             name: p.name,
             originalPrice: p.originalPrice,
             discountRate: p.discountRate,
@@ -328,6 +330,7 @@ export default function SearchResult() {
                 <Product
                   key={p.productId}
                   productId={p.productId}
+                  vendor={p.vendor}
                   name={p.name}
                   originalPrice={p.originalPrice}
                   discountRate={p.discountRate}

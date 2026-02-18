@@ -7,6 +7,7 @@ type ProductSize = "md" | "sm";
 type ProductProps = {
   size?: ProductSize;
   productId: number;
+  vendor: string;
   name: string;
   originalPrice: number;
   discountRate: number;
@@ -29,10 +30,21 @@ const SIZE_MAP: Record<ProductSize, { w: string; h: string; nameW: string }> = {
   sm: { w: "w-[140px]", h: "h-[140px]", nameW: "w-[140px]" },
 };
 
+const VENDOR_LABEL: Record<string, string> = {
+  COUPANG: "쿠팡",
+  ALI: "알리익스프레스",
+};
+
+function formatVendor(vendor?: string) {
+  if (!vendor) return "";
+  const key = vendor.trim().toUpperCase();
+  return VENDOR_LABEL[key] ?? vendor; // 매핑 없으면 원문 그대로
+}
 
 export default function Product({
   size = "md",
   productId,
+  vendor,
   name,
   originalPrice,
   discountRate,
@@ -59,12 +71,27 @@ export default function Product({
   });
 
   const s = SIZE_MAP[size];
+  const vendorLabel = formatVendor(vendor);
 
   return (
     <div className={`flex flex-col gap-2 ${s.w}`}>
       {/* 상품사진 */}
       <div className="relative w-full flex justify-center">
         <div className={`relative w-full ${s.h}`}>
+          {vendor ? (
+            <div
+              className="
+          absolute top-2 left-2 z-10
+          px-2 py-[2px]
+          rounded-[2px]
+          bg-[#F9F9F9] backdrop-blur
+          border border-white/60
+          text-[12px] font-medium text-[#787878]
+        "
+            >
+              {vendorLabel}
+            </div>
+          ) : null}
           <img
             src={imageUrl}
             alt={name}
@@ -111,12 +138,16 @@ export default function Product({
             </div>
           </div>
         ) : (
-          <span>{originalPrice.toLocaleString()}원</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[#191919] text-[18px] font-bold">
+              {originalPrice.toLocaleString()}원
+            </span>
+          </div>
         )}
       </div>
 
-      <div>
-        {/* 별점/리뷰 */}
+      {/* <div>
+        별점/리뷰
         <div className="flex flex-row gap-[2px] items-center">
           <img src={star} alt="평점" className="inline" />
           <span className="text-[#B5B5B5] text-[13px]">
@@ -127,13 +158,13 @@ export default function Product({
           </span>
         </div>
 
-        {/* 배달비 */}
+        배달비
         <span className="text-[#B5B5B5] text-[13px]">
           {deliveryFee === 0
             ? "무료배송"
             : `배송비 ${deliveryFee.toLocaleString()}원`}
         </span>
-      </div>
+      </div> */}
     </div>
   );
 }
