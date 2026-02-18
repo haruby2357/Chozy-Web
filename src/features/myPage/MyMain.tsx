@@ -56,8 +56,8 @@ function MyMain() {
   const loginId = profile?.loginId ?? "";
 
   return (
-    <>
-      <div className="absolute top-0 left-0 right-0 h-[256px] bg-[#800025] z-10">
+    <div className="relative h-dvh overflow-hidden bg-white">
+      <div className="absolute top-0 left-0 right-0 h-[256px] bg-[#800025] z-0">
         {bgUrl ? (
           <img src={bgUrl} alt="배경" className="w-full h-full object-cover" />
         ) : (
@@ -66,12 +66,12 @@ function MyMain() {
           </div>
         )}
       </div>
-      <div className="relative z-20">
+      <div className="relative z-30">
         <Header />
       </div>
 
       {!!statusMessage && (
-        <div className="absolute left-[18px] top-[187px] z-30">
+        <div className="absolute left-[18px] top-[187px] z-50">
           <div className="flex items-center gap-2 px-2 py-[6px] bg-white/10 backdrop-blur text-white">
             <span className="text-[14px] text-white whitespace-pre-line">
               💬 {statusMessage}
@@ -96,89 +96,92 @@ function MyMain() {
         </div>
       </div>
 
-      <div className="relative pt-[235px] bg-white">
-        <div className="px-4 pt-8 pb-5">
-          {/* 닉네임/아이디 */}
-          <div className="pl-[100px]">
-            <div
-              role={!isLoggedIn ? "button" : undefined}
-              tabIndex={!isLoggedIn ? 0 : -1}
-              onClick={() => {
-                if (!isLoggedIn) navigate("/login");
-              }}
-              onKeyDown={(e) => {
-                if (!isLoggedIn && (e.key === "Enter" || e.key === " ")) {
-                  e.preventDefault();
-                  navigate("/login");
-                }
-              }}
-              className={`text-[16px] font-semibold mb-1 text-[#191919] ${
-                !isLoggedIn ? "underline cursor-pointer" : ""
-              }`}
-            >
-              {isLoggedIn ? nickname : "로그인이 필요합니다."}
-            </div>
-            {loginId && (
-              <div className="text-[14px] text-[#B5B5B5] font-medium">
-                @{loginId}
+      <div className="relative z-20 flex h-full flex-col">
+        <div className="mt-[256px] bg-white shrink-0">
+          <div className="px-4 pt-3 pb-5">
+            {/* 닉네임/아이디 */}
+            <div className="pl-[100px]">
+              <div
+                role={!isLoggedIn ? "button" : undefined}
+                tabIndex={!isLoggedIn ? 0 : -1}
+                onClick={() => {
+                  if (!isLoggedIn) navigate("/login");
+                }}
+                onKeyDown={(e) => {
+                  if (!isLoggedIn && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    navigate("/login");
+                  }
+                }}
+                className={`text-[16px] font-semibold mb-1 text-[#191919] ${
+                  !isLoggedIn ? "underline cursor-pointer" : ""
+                }`}
+              >
+                {isLoggedIn ? nickname : "로그인이 필요합니다."}
               </div>
-            )}
+              {loginId && (
+                <div className="text-[14px] text-[#B5B5B5] font-medium">
+                  @{loginId}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex items-center gap-5">
+              <button
+                type="button"
+                className="h-8 ml-4 px-2 py-1 rounded-[4px] bg-[#F9F9F9] text-[#575757] text-[14px] font-medium"
+              >
+                프로필 수정
+              </button>
+
+              <div className="flex-1 grid grid-cols-3 text-left">
+                <div>
+                  <div className="text-[18px] font-semibold text-[#191919]">
+                    {profile?.reviewCount ?? 0}
+                  </div>
+                  <div className="text-[14px] text-[#191919]">내 후기</div>
+                </div>
+                <div>
+                  <div className="text-[18px] font-semibold text-[#191919]">
+                    {profile?.followerCount ?? 0}
+                  </div>
+                  <div className="text-[14px] text-[#191919]">팔로워</div>
+                </div>
+                <div>
+                  <div className="text-[18px] font-semibold text-[#191919]">
+                    {profile?.followingCount ?? 0}
+                  </div>
+                  <div className="text-[14px] text-[#191919]">팔로잉</div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* 버튼 + 카운트 */}
-          <div className="mt-4 flex items-center gap-5">
-            <button
-              type="button"
-              className="h-8 ml-4 px-2 py-1 rounded-[4px] bg-[#F9F9F9] text-[#575757] text-[14px] font-medium"
-            >
-              프로필 수정
-            </button>
-
-            <div className="flex-1 grid grid-cols-3 text-left">
-              <div>
-                <div className="text-[18px] font-semibold text-[#191919]">
-                  {profile?.reviewCount ?? 0}
-                </div>
-                <div className="text-[14px] text-[#191919]">내 후기</div>
-              </div>
-              <div>
-                <div className="text-[18px] font-semibold text-[#191919]">
-                  {profile?.followerCount ?? 0}
-                </div>
-                <div className="text-[14px] text-[#191919]">팔로워</div>
-              </div>
-              <div>
-                <div className="text-[18px] font-semibold text-[#191919]">
-                  {profile?.followingCount ?? 0}
-                </div>
-                <div className="text-[14px] text-[#191919]">팔로잉</div>
-              </div>
-            </div>
-          </div>
+          <TabBar value={tab} onChange={handleTabChange} />
         </div>
-        <TabBar value={tab} onChange={handleTabChange} />
-      </div>
-      <div
-        ref={scrollRef}
-        className="bg-[#F9F9F9] scroll-available flex-1 overflow-y-auto scrollbar-hide"
-      >
-        <PostList
-          contentType="ALL"
-          fetchFeeds={() =>
-            tab === "reviews"
-              ? mypageApi.getMyFeeds({ page: 0, size: 20, sort: "latest" })
-              : mypageApi.getMyBookmarks({ page: 0, size: 20 })
-          }
-          emptyVariant="mypage"
-          emptyText={
-            tab === "reviews"
-              ? "아직 남긴 후기가 없어요.\n첫 후기를 남겨보세요!"
-              : "아직 북마크한 글이 없어요.\n나중에 다시 보고 싶은 글을 저장해보세요."
-          }
-        />
+
+        <div
+          ref={scrollRef}
+          className="scroll-available flex-1 overflow-y-auto bg-[#F9F9F9] scrollbar-hide"
+        >
+          <PostList
+            contentType="ALL"
+            fetchFeeds={() =>
+              tab === "reviews"
+                ? mypageApi.getMyFeeds({ page: 0, size: 20, sort: "latest" })
+                : mypageApi.getMyBookmarks({ page: 0, size: 20 })
+            }
+            emptyVariant="mypage"
+            emptyText={
+              tab === "reviews"
+                ? "아직 남긴 후기가 없어요.\n첫 후기를 남겨보세요!"
+                : "아직 북마크한 글이 없어요.\n나중에 다시 보고 싶은 글을 저장해보세요."
+            }
+          />
+        </div>
       </div>
       <Nav scrollTargetSelector=".scroll-available" />
-    </>
+    </div>
   );
 }
 

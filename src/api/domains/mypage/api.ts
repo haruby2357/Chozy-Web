@@ -19,7 +19,7 @@ export async function getMyFeeds(params: GetMyFeedsParams = {}) {
   const { page = 0, size = 20, sort = "latest" } = params;
 
   const res = await axiosInstance.get<ApiResponse<MyPageFeedsResult>>(
-    "/me/reviews",
+    "/me/feeds",
     { params: { page, size, sort } },
   );
 

@@ -12,6 +12,7 @@ import type {
   UiMention,
   UiReplyTo,
   UiFeedDetailResult,
+  UiQuote,
 } from "./types";
 
 export function pickIsMine(feed: ApiFeed): boolean {
@@ -32,6 +33,7 @@ function mapCounts(counts: ApiFeed["counts"]): UiFeedCounts {
     likes: counts.likeCount,
     dislikes: counts.dislikeCount,
     quotes: counts.quoteCount,
+    views: counts.viewCount,
   };
 }
 
@@ -42,9 +44,6 @@ function mapFeed(api: ApiFeed): UiFeedDetail {
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((x) => x.imageUrl)
       .filter(Boolean) ?? [];
-
-  const type: "REVIEW" | "POST" =
-    api.contentType === "REVIEW" ? "REVIEW" : "POST";
 
   const base = {
     feedId: api.feedId,
@@ -57,10 +56,11 @@ function mapFeed(api: ApiFeed): UiFeedDetail {
     },
   } as const;
 
-  if (type === "REVIEW") {
+  if (api.contentType === "REVIEW") {
     return {
       ...base,
       type: "REVIEW",
+      createdAt: api.createdAt,
       content: {
         vendor: api.contents.vendor ?? "",
         title: api.contents.title ?? "",
@@ -68,18 +68,26 @@ function mapFeed(api: ApiFeed): UiFeedDetail {
         text: api.contents.content ?? "",
         contentImgs: images,
         hashTags: api.contents.hashTags ?? [],
+        quote: api.contents.quote ? mapQuote(api.contents.quote) : undefined,
       },
+      isMine: api.mine ?? false,
     };
   }
 
+  const type: "POST" | "QUOTE" | "REPOST" =
+    api.kind === "QUOTE" ? "QUOTE" : api.kind === "REPOST" ? "REPOST" : "POST";
+
   return {
     ...base,
-    type: "POST",
+    type,
+    createdAt: api.createdAt,
     content: {
       text: api.contents.content ?? "",
       contentImgs: images,
       hashTags: api.contents.hashTags ?? [],
+      quote: api.contents.quote ? mapQuote(api.contents.quote) : undefined,
     },
+    isMine: api.mine ?? false,
   };
 }
 
@@ -136,5 +144,89 @@ export function mapApiResultToUi(
   return {
     feed: mapFeed(result.feed),
     comments: (result.comments ?? []).map(mapComment),
+  };
+}
+
+function mapQuote(q: any): UiQuote {
+  return {
+    feedId: q.feedId,
+    user: {
+      profileImg: q.user?.profileImageUrl ?? "",
+      userName: q.user?.name ?? "",
+      userId: q.user?.userId ?? "",
+    },
+    text: q.text ?? "",
+    vendor: q.vendor,
+    title: q.title,
+    rating: q.rating,
+    productUrl: q.productUrl ?? null,
+    contentImgs: q.contentImgs ?? [],
+    // hashTags 쓰려면 UiQuote에 hashTags?: string[] 추가해둔 상태에서만:
+    // hashTags: q.hashTags ?? [],
+  };
+}
+
+export function toUiFeedDetail(apiFeed: any): UiFeedDetail {
+  const base = {
+    feedId: apiFeed.feedId,
+    createdAt: apiFeed.createdAt,
+    isMine: !!apiFeed.mine,
+
+    user: {
+      profileImg: apiFeed.user?.profileImageUrl ?? "",
+      userName: apiFeed.user?.name ?? "",
+      userId: apiFeed.user?.userId ?? "",
+    },
+
+    counts: {
+      comments: apiFeed.counts?.commentCount ?? 0,
+      likes: apiFeed.counts?.likeCount ?? 0,
+      dislikes: apiFeed.counts?.dislikeCount ?? 0,
+      quotes: apiFeed.counts?.quoteCount ?? 0,
+      views: apiFeed.counts?.viewCount ?? 0,
+    },
+
+    myState: {
+      reaction: apiFeed.myState?.reactionType ?? "NONE",
+      isbookmarked: !!apiFeed.myState?.bookmarked,
+      isreposted: !!apiFeed.myState?.reposted,
+      isfollowing: !!apiFeed.myState?.following,
+    },
+  } as const;
+
+  // REVIEW 분기 (리뷰 전용 필드 포함)
+  if (apiFeed.kind === "REVIEW") {
+    return {
+      ...base,
+      type: "REVIEW",
+      content: {
+        vendor: apiFeed.contents?.vendor ?? "",
+        productUrl: apiFeed.contents?.productUrl ?? null,
+        title: apiFeed.contents?.title ?? "",
+        rating: apiFeed.contents?.rating ?? 0,
+
+        text: apiFeed.contents?.content ?? "",
+        contentImgs: apiFeed.contents?.feedImages ?? [],
+        hashTags: apiFeed.contents?.hashTags ?? [],
+
+        quote: apiFeed.contents?.quote
+          ? mapQuote(apiFeed.contents.quote)
+          : undefined,
+      },
+    };
+  }
+
+  // POST / QUOTE / REPOST (post content 형태로 통일)
+  return {
+    ...base,
+    type: apiFeed.kind as "POST" | "QUOTE" | "REPOST",
+    content: {
+      text: apiFeed.contents?.content ?? "",
+      contentImgs: apiFeed.contents?.feedImages ?? [],
+      hashTags: apiFeed.contents?.hashTags ?? [],
+      quote: apiFeed.contents?.quote
+        ? mapQuote(apiFeed.contents.quote)
+        : undefined,
+    },
   };
 }

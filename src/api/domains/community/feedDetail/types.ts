@@ -17,6 +17,13 @@ export type ApiFeedImage = {
   contentType: string;
 };
 
+export type ApiFeedQuote = {
+  feedId: number;
+  user: ApiFeedUser;
+  text: string;
+  hashTags: string[];
+};
+
 export type ApiFeedContents = {
   // REVIEW일 때
   vendor?: string;
@@ -27,6 +34,8 @@ export type ApiFeedContents = {
   content: string;
   feedImages?: ApiFeedImage[];
   hashTags?: string[];
+
+  quote?: ApiFeedQuote | null;
 };
 
 export type ApiFeed = {
@@ -118,18 +127,21 @@ export type UiFeedCounts = {
   likes: number;
   dislikes: number;
   quotes: number;
+  views: number;
 };
 
 export type UiFeedMyState = {
   reaction: Reaction;
   isbookmarked: boolean;
   isreposted: boolean;
+  isfollowing?: boolean;
 };
 
 export type UiPostContentDetail = {
   text: string;
   contentImgs: string[];
   hashTags: string[];
+  quote?: UiQuote;
 };
 
 export type UiReviewContentDetail = {
@@ -138,23 +150,48 @@ export type UiReviewContentDetail = {
   rating: number;
   text: string;
   contentImgs: string[];
+  productUrl?: string | null;
   hashTags: string[];
+  quote?: UiQuote;
+};
+
+export type UiQuote = {
+  feedId: number;
+  user: {
+    profileImg: string;
+    userName: string;
+    userId: string;
+  };
+  text?: string;
+  vendor?: string;
+  title?: string;
+  rating?: number;
+  productUrl?: string | null;
+  contentImgs?: string[];
 };
 
 export type UiFeedDetail =
   | {
       feedId: number;
-      type: "POST";
+      type: "POST" | "QUOTE" | "REPOST";
+      createdAt: string;
+      isMine: boolean;
+
       user: UiFeedUser;
       content: UiPostContentDetail;
+
       counts: UiFeedCounts;
       myState: UiFeedMyState;
     }
   | {
       feedId: number;
       type: "REVIEW";
+      createdAt: string;
+      isMine: boolean;
+
       user: UiFeedUser;
       content: UiReviewContentDetail;
+
       counts: UiFeedCounts;
       myState: UiFeedMyState;
     };
