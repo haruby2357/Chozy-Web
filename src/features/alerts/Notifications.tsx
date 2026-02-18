@@ -1,11 +1,7 @@
 import back from "../../assets/all/back.svg";
-import EmptyNotifications from "./EmptyNotifications";
+import FollowRequestList from "./FollowRequestList";
 
 export default function Notifications() {
-  // MSW 설정 필요
-  const notifications: unknown[] = [];
-  const hasNotifications = notifications.length > 0;
-
   return (
     <div className="h-full flex flex-col bg-white">
       {/* 알림 헤더 공유 */}
@@ -25,16 +21,7 @@ export default function Notifications() {
         </div>
       </header>
 
-      {hasNotifications ? (
-        // "알림 있음" UI구현 예정.
-        <div className="flex-1 flex items-center justify-center">
-          <span className="text-[#191919] text-[18px] font-medium">
-            알림 페이지
-          </span>
-        </div>
-      ) : (
-        <EmptyNotifications /> // "알림 없음" 컴포넌트
-      )}
+      <FollowRequestList />
     </div>
   );
 }
