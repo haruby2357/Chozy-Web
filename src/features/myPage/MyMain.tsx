@@ -7,7 +7,6 @@ import bgLogo from "../../assets/mypage/bgLogo.svg";
 import defaultProfile from "../../assets/mypage/defaultProfile.svg";
 
 import PostList from "../comm/components/PostList";
-
 import { mypageApi } from "../../api";
 
 type Tab = "reviews" | "bookmarks";
@@ -141,13 +140,41 @@ function MyMain() {
                   </div>
                   <div className="text-[14px] text-[#191919]">내 후기</div>
                 </div>
-                <div>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      navigate("/login");
+                      return;
+                    }
+
+                    navigate("/mypage/followings", {
+                      state: { userId: loginId, defaultTab: "followers" },
+                    });
+                  }}
+                >
                   <div className="text-[18px] font-semibold text-[#191919]">
                     {profile?.followerCount ?? 0}
                   </div>
                   <div className="text-[14px] text-[#191919]">팔로워</div>
                 </div>
-                <div>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      navigate("/login");
+                      return;
+                    }
+
+                    navigate("/mypage/followings", {
+                      state: { userId: loginId, defaultTab: "followings" },
+                    });
+                  }}
+                >
                   <div className="text-[18px] font-semibold text-[#191919]">
                     {profile?.followingCount ?? 0}
                   </div>

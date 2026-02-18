@@ -65,7 +65,7 @@ export default function FeedHeader({
         onClose={() => setOpenEtc(false)}
         isMine={isMine}
         feedId={feedId}
-        authorUserId={user.userId}
+        authorUserPk={user.userPk}
       />
     </>
   );

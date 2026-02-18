@@ -2,7 +2,7 @@ import axios from "axios";
 
 // 기본 인스턴스 생성
 const axiosInstance = axios.create({
-  // baseURL: import.meta.env.VITE_API_BASE_URL ?? "https://chozy.net",
+  // baseURL: "/api",
   baseURL: "/api", // 프록시 설정으로 인해 /api로 시작하는 요청은 자동으로 https://chozy.net으로 전달됨
   timeout: 5000,
   headers: {
@@ -62,7 +62,7 @@ axiosInstance.interceptors.response.use(
         const maybeAxiosError = refreshError as {
           response?: { data?: { code?: number }; status?: number };
         };
-        
+
         // 명세서 에러 코드 4013: 리프레시 토큰도 만료되었거나 유효하지 않음
         const errorCode = maybeAxiosError.response?.data?.code;
 

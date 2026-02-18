@@ -71,3 +71,21 @@ export const verifyEmail = async (email: string, code: string) => {
   });
   return response.data;
 };
+
+// 로컬 스토리지의 accessToken에서 userId를 추출하는 함수
+export const getUserIdFromToken = (): number | null => {
+  const token = localStorage.getItem("accessToken");
+  if (!token) return null;
+
+  try {
+    const base64Payload = token.split(".")[1];
+    const payload = atob(base64Payload);
+    const result = JSON.parse(payload);
+
+    const userId = result.userId || result.id || result.sub;
+    return userId ? Number(userId) : null;
+  } catch (error) {
+    console.error("토큰 해독 실패:", error);
+    return null;
+  }
+};

@@ -120,7 +120,17 @@ export default function PostDetail() {
       setDetail(ui);
       setComments(ui.comments ?? []);
 
-      setIsFollowing(data.result.feed.myState?.following ?? false);
+      const rawState = data.result.feed.myState as any;
+
+      const serverFollowing =
+        rawState?.following ??
+        rawState?.isFollowing ??
+        rawState?.isfollowing ??
+        rawState?.followed ?? // 혹시 이런 이름이면
+        false;
+
+      setIsFollowing(!!serverFollowing);
+
       setCreatedAtText(formatKoreanDateTime(data.result.feed.createdAt));
       setViewCount(data.result.feed.counts?.viewCount ?? 0);
       setIsMine(pickIsMine(data.result.feed));
@@ -240,6 +250,8 @@ export default function PostDetail() {
     const targetPk = feed.user.userPk;
     if (!targetPk) return;
 
+    const nextIsFollowing = !isFollowing;
+
     try {
       if (isFollowing) {
         const res = await unfollowUser(targetPk); // DELETE
@@ -250,6 +262,13 @@ export default function PostDetail() {
         const next = res.result?.followStatus === "FOLLOWING";
         setIsFollowing(next);
       }
+
+      showToast(
+        nextIsFollowing
+          ? `@${feed.user.userId} 님을 팔로우했어요.`
+          : "팔로우를 취소했어요.",
+        nextIsFollowing ? toastmsg : undefined,
+      );
 
       await fetchDetail();
     } catch (e: any) {
