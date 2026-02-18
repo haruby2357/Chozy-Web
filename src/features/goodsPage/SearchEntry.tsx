@@ -10,6 +10,11 @@ import popularDown from "../../assets/goodsPage/search/popular_down.svg";
 import popularStay from "../../assets/goodsPage/search/popular_stay.svg";
 import clueIcon from "../../assets/goodsPage/search/clue.svg";
 
+import {
+  deleteAllRecentKeywords,
+  deleteRecentKeyword,
+} from "../../api/domains/goods/search";
+
 type ApiResponse<T> = {
   isSuccess: boolean;
   code: number;
@@ -138,6 +143,47 @@ export default function SearchEntry() {
     return (data.result ?? ([] as unknown as T)) as T;
   };
 
+  // // 전체 삭제: DELETE /home/search/recent
+  // const deleteAllRecentKeywordsApi = async () => {
+  //   const res = await fetch("/home/search/recent", { method: "DELETE" });
+  //   const data = (await res.json()) as ApiResponse<string>;
+  //   if (!res.ok || !data.isSuccess) throw new Error(data.message);
+  //   return data;
+  // };
+
+  // // 개별 삭제: DELETE /home/searches/recent/{keywordId}
+  // const deleteOneRecentKeywordApi = async (keywordId: number) => {
+  //   const res = await fetch(`/home/searches/recent/${keywordId}`, {
+  //     method: "DELETE",
+  //   });
+  //   const data = (await res.json()) as ApiResponse<string>;
+  //   if (!res.ok || !data.isSuccess) throw new Error(data.message);
+  //   return data;
+  // };
+
+  const onDeleteRecentKeyword = async (keywordId: number) => {
+    const prev = recentKeywords;
+
+    setRecentKeywords((curr) => curr.filter((k) => k.keywordId !== keywordId));
+
+    try {
+      await deleteRecentKeyword(keywordId); // 👈 여기
+    } catch {
+      setRecentKeywords(prev);
+    }
+  };
+
+  const onClearRecentKeywords = async () => {
+    const prev = recentKeywords;
+    setRecentKeywords([]);
+
+    try {
+      await deleteAllRecentKeywords();
+    } catch {
+      setRecentKeywords(prev);
+    }
+  };
+
   const loadSections = useCallback(async () => {
     const [recent, popular, products] = await Promise.all([
       fetchJson<RecentKeyword[]>("/home/search/recent"),
@@ -217,11 +263,6 @@ export default function SearchEntry() {
     goToResults(keyword);
   };
 
-  const onDeleteRecentKeyword = (keywordId: number) => {
-    // 백엔드 삭제 API 명세가 없으므로 이번 PR에서는 클라이언트 state에서만 삭제 반영 -> 삭제 API 요청
-    setRecentKeywords((prev) => prev.filter((k) => k.keywordId !== keywordId));
-  };
-
   const onToggleRecentProductLike = (productId: number) => {
     setRecentProducts((prev) =>
       prev.map((p) =>
@@ -248,6 +289,15 @@ export default function SearchEntry() {
               <h2 className="text-[16px] font-bold text-[#191919]">
                 최근 검색어
               </h2>
+              {hasRecentKeywords && (
+                <button
+                  type="button"
+                  onClick={onClearRecentKeywords}
+                  className="text-[12px] font-normal text-[#B5B5B5] underline"
+                >
+                  전체삭제
+                </button>
+              )}
             </div>
 
             <div className="mt-3">

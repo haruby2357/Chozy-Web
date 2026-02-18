@@ -26,6 +26,7 @@ import BlockedAccounts from "../features/myPage/components/setting/BlockedAccoun
 import WithdrawAccount from "../features/myPage/components/setting/WithdrawAccount";
 import WithdrawComplete from "../features/myPage/components/setting/WithdrawComplete";
 import FavoritePage from "../features/favorites/FavoritePage";
+import RequireAuth from "../components/RequireAuth";
 
 export default function AppRouter() {
   return (
@@ -63,7 +64,14 @@ export default function AppRouter() {
       <Route path="/review-write" element={<ReviewWrite />} />
 
       {/* 찜 페이지 라우팅 */}
-      <Route path="/heart" element={<FavoritePage />} />
+      <Route
+        path="/heart"
+        element={
+          <RequireAuth>
+            <FavoritePage />
+          </RequireAuth>
+        }
+      />
 
       {/* 개인 페이지 라우팅 */}
       <Route path="/mypage" element={<MyMain />} />
