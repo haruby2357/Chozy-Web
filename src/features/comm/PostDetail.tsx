@@ -31,7 +31,6 @@ import {
   type UiFeedDetailResult,
   type UiCommentItem,
   type Reaction,
-  type UiFeedUser,
 } from "../../api/domains/community/feedDetail";
 import {
   toggleFeedReaction,
@@ -235,8 +234,6 @@ export default function PostDetail() {
   // ------------------------------
   //  팔로우 토글
   // ------------------------------
-  type FollowStatus = "FOLLOWING" | "NONE";
-  type FollowResponse = { targetUserId: string; followStatus: FollowStatus };
   // const isFollowing = !!feed.myState.isfollowing;
 
   const handleToggleFollow = async () => {
