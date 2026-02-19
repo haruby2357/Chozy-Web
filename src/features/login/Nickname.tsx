@@ -106,7 +106,7 @@ export default function Nickname() {
             <label className="text-neutral-500 text-sm font-medium font-['Pretendard'] block">
               닉네임
             </label>
-            <div className="flex gap-2 border-b px-1 py-3 justify-between items-center border-zinc-400 transition">
+            <div className="flex gap-2 border-b px-1 py-3 justify-between items-center border-zinc-400 transition focus-within:border-rose-900">
               <div className="flex items-center flex-1 relative">
                 <input
                   type="text"
