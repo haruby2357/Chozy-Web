@@ -34,6 +34,7 @@ import MyPageSearchEntry from "../features/myPage/MyPageSearchEntry";
 import MyPageSearchResult from "../features/myPage/MyPageSearchResult";
 import RequireAuth from "../components/RequireAuth";
 import FollowingsPage from "../features/myPage/FollowingsPage";
+import OtherMain from "../features/myPage/OtherMain";
 
 export default function AppRouter() {
   return (
@@ -99,6 +100,7 @@ export default function AppRouter() {
 
       {/* 개인 페이지 라우팅 */}
       <Route path="/mypage" element={<MyMain />} />
+      <Route path="/otherpage/:userId" element={<OtherMain />} />
       <Route path="/mypage/edit" element={<EditProfile />} />
       <Route
         path="/mypage/search"
