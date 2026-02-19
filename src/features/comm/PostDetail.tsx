@@ -597,8 +597,7 @@ export default function PostDetail() {
         isReposted={isReposted}
         onRepost={handleToggleRepost}
         onQuote={() => {
-          // TODO: 인용 작성 화면으로 이동
-          // navigate(`/community/feeds/${numericFeedId}/quote`);
+          navigate(`/community/feeds/${numericFeedId}/quote`);
         }}
       />
 

@@ -5,6 +5,8 @@ import Header from "./components/Header";
 import TabBar from "./components/TabBar";
 import bgLogo from "../../assets/mypage/bgLogo.svg";
 import defaultProfile from "../../assets/mypage/defaultProfile.svg";
+import birth from "../../assets/mypage/birth.svg";
+import height from "../../assets/mypage/height.svg";
 
 import PostList from "../comm/components/PostList";
 import { mypageApi } from "../../api";
@@ -61,6 +63,16 @@ function MyMain() {
   const statusMessage = profile?.statusMessage ?? "";
   const nickname = profile?.nickname ?? "로그인이 필요합니다.";
   const loginId = profile?.loginId ?? "";
+
+  const birthText =
+    profile?.isBirthPublic && profile?.birthDate ? profile.birthDate : null;
+
+  const bodyText =
+    profile?.isHeightPublic || profile?.isWeightPublic
+      ? `${profile?.isHeightPublic ? `${profile?.heightCm ?? ""}cm` : ""}${
+          profile?.isHeightPublic && profile?.isWeightPublic ? " / " : ""
+        }${profile?.isWeightPublic ? `${profile?.weightKg ?? ""}kg` : ""}`
+      : null;
 
   return (
     <div className="relative h-dvh overflow-hidden bg-white">
@@ -129,6 +141,22 @@ function MyMain() {
               {loginId && (
                 <div className="text-[14px] text-[#B5B5B5] font-medium">
                   @{loginId}
+                </div>
+              )}
+              {(birthText || bodyText) && (
+                <div className="mt-2 flex flex-col gap-1 text-[14px] text-[#B5B5B5] font-medium">
+                  {birthText && (
+                    <div className="flex flex-row gap-0.5">
+                      <img src={birth} alt="생일" />
+                      <span>{birthText}</span>
+                    </div>
+                  )}
+                  {bodyText && (
+                    <div className="flex flex-row gap-0.5">
+                      <img src={height} alt="키몸무게" />
+                      <span>{bodyText}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

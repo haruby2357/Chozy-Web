@@ -6,6 +6,9 @@ import SubmitButton from "../../components/SubmitButton";
 import Toast from "../../components/Toast";
 import defaultProfile from "../../assets/mypage/defaultProfile.svg";
 import bgLogo from "../../assets/mypage/bgLogo.svg";
+import pencil from "../../assets/mypage/pencil.svg";
+import editPic from "../../assets/mypage/edit-pic.svg";
+import cancelIcon from "../../assets/all/cancel.svg";
 
 export default function EditProfile() {
   const navigate = useNavigate();
@@ -13,7 +16,6 @@ export default function EditProfile() {
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [profile, setProfile] = useState<mypageApi.MyProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
@@ -31,14 +33,11 @@ export default function EditProfile() {
     backgroundImageUrl: "",
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
     null,
   );
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [, setBackgroundImage] = useState<File | null>(null);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState<
     string | null
@@ -49,6 +48,10 @@ export default function EditProfile() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [nicknameErrors, setNicknameErrors] = useState<string[]>([]);
+  const [birthDateErrors, setBirthDateErrors] = useState<string[]>([]);
+  const [heightCmErrors, setHeightCmErrors] = useState<string[]>([]);
+  const [weightKgErrors, setWeightKgErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -59,7 +62,9 @@ export default function EditProfile() {
           setFormData({
             statusMessage: data.result.statusMessage ?? "",
             nickname: data.result.nickname ?? "",
-            birthDate: data.result.birthDate ?? "",
+            birthDate: data.result.birthDate
+              ? data.result.birthDate.replace(/-/g, ".")
+              : "",
             heightCm: data.result.heightCm ? String(data.result.heightCm) : "",
             weightKg: data.result.weightKg ? String(data.result.weightKg) : "",
             isAccountPublic: data.result.isAccountPublic ?? true,
@@ -82,11 +87,190 @@ export default function EditProfile() {
     loadProfile();
   }, [navigate]);
 
-  const isFormValid = !!formData.nickname.trim();
+  const isFormValid =
+    !!formData.nickname.trim() &&
+    nicknameErrors.length === 0 &&
+    (formData.birthDate.length === 0 ||
+      (formData.birthDate.length === 10 && birthDateErrors.length === 0)) &&
+    heightCmErrors.length === 0 &&
+    weightKgErrors.length === 0;
+
+  const validateNickname = (value: string) => {
+    const errors: string[] = [];
+
+    // 한글만 사용 가능 (공백은 허용)
+    const hasInvalidChars = /[^가-힣\s]/.test(value) && value.length > 0;
+    if (hasInvalidChars) {
+      errors.push("닉네임은 한글만 사용할 수 있어요.");
+    }
+
+    // 8자 이하
+    if (value.length > 8) {
+      errors.push("8자 이하로 입력해주세요.");
+    }
+
+    return errors;
+  };
+
+  const validateBirthDate = (value: string): string[] => {
+    const errors: string[] = [];
+
+    // 빈 값이면 에러 없음
+    if (value.length === 0) {
+      return errors;
+    }
+
+    // 형식 확인 (YYYY.MM.DD 형식)
+    const parts = value.split(".");
+    if (
+      parts.length !== 3 ||
+      parts[0].length !== 4 ||
+      parts[1].length !== 2 ||
+      parts[2].length !== 2
+    ) {
+      errors.push("생일 형식을 올바르게 입력해주세요.");
+      return errors;
+    }
+
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+
+    // 유효한 날짜인지 확인
+    const birthDate = new Date(year, month - 1, day);
+    const isValidDate =
+      birthDate.getFullYear() === year &&
+      birthDate.getMonth() === month - 1 &&
+      birthDate.getDate() === day;
+
+    if (!isValidDate) {
+      errors.push("생일 형식을 올바르게 입력해주세요.");
+      return errors;
+    }
+
+    // 미래 날짜인지 확인
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    birthDate.setHours(0, 0, 0, 0);
+
+    if (birthDate > today) {
+      errors.push("생일은 오늘보다 이전 날짜여야 합니다.");
+    }
+
+    return errors;
+  };
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const formatBirthDateForServer = (displayFormat: string): string => {
+    // "2004.12.12" → "2004-12-12"
+    return displayFormat.replace(/\./g, "-");
+  };
+
+  const validateHeightCm = (value: string): string[] => {
+    const errors: string[] = [];
+
+    if (value.length === 0) {
+      return errors;
+    }
+
+    const height = parseInt(value, 10);
+    if (height < 100 || height > 220) {
+      errors.push("키는 100~220cm 사이로 입력해주세요.");
+    }
+
+    return errors;
+  };
+
+  const validateWeightKg = (value: string): string[] => {
+    const errors: string[] = [];
+
+    if (value.length === 0) {
+      return errors;
+    }
+
+    const weight = parseInt(value, 10);
+    if (weight < 20 || weight > 200) {
+      errors.push("몸무게는 20~200kg 사이로 입력해주세요.");
+    }
+
+    return errors;
+  };
+
+  const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    handleTextChange("nickname", value);
+    const errors = validateNickname(value);
+    setNicknameErrors(errors);
+  };
+
+  const handleClearNickname = () => {
+    handleTextChange("nickname", "");
+    setNicknameErrors([]);
+  };
+
+  const handleClearBirthDate = () => {
+    handleTextChange("birthDate", "");
+    setBirthDateErrors([]);
+  };
+
+  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/[^0-9]/g, ""); // 숫자만 추출
+
+    // 8글자까지만 입력 가능
+    if (value.length > 8) {
+      value = value.slice(0, 8);
+    }
+
+    // 마침표 자동 추가 (4번째, 6번째 위치)
+    let formatted = "";
+    for (let i = 0; i < value.length; i++) {
+      if (i === 4 || i === 6) {
+        formatted += ".";
+      }
+      formatted += value[i];
+    }
+
+    handleTextChange("birthDate", formatted);
+
+    // 유효성 검사
+    const errors = validateBirthDate(formatted);
+    setBirthDateErrors(errors);
+  };
+
+  const handleHeightCmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/[^0-9]/g, ""); // 숫자만 추출
+
+    // 3글자까지만 입력 가능
+    if (value.length > 3) {
+      value = value.slice(0, 3);
+    }
+
+    handleTextChange("heightCm", value);
+  };
+
+  const handleHeightCmBlur = () => {
+    const errors = validateHeightCm(formData.heightCm);
+    setHeightCmErrors(errors);
+  };
+
+  const handleWeightKgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/[^0-9]/g, ""); // 숫자만 추출
+
+    // 3글자까지만 입력 가능
+    if (value.length > 3) {
+      value = value.slice(0, 3);
+    }
+
+    handleTextChange("weightKg", value);
+  };
+
+  const handleWeightKgBlur = () => {
+    const errors = validateWeightKg(formData.weightKg);
+    setWeightKgErrors(errors);
   };
 
   const handleTextChange = (
@@ -150,7 +334,9 @@ export default function EditProfile() {
       const updateData: mypageApi.UpdateProfileRequest = {
         nickname: formData.nickname,
         statusMessage: formData.statusMessage || null,
-        birthDate: formData.birthDate || undefined,
+        birthDate: formData.birthDate
+          ? formatBirthDateForServer(formData.birthDate)
+          : undefined,
         heightCm: formData.heightCm ? Number(formData.heightCm) : undefined,
         weightKg: formData.weightKg ? Number(formData.weightKg) : undefined,
         isAccountPublic: formData.isAccountPublic,
@@ -266,35 +452,39 @@ export default function EditProfile() {
             <button
               type="button"
               onClick={() => profileImageInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#800025] flex items-center justify-center text-white text-[12px] font-bold hover:bg-[#650019] transition-colors"
+              className="absolute bottom-0 right-0 flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              +
+              <img src={editPic} alt="프로필 수정" className="w-7 h-7" />
             </button>
+          </div>
+
+          {/* 상태 메시지 */}
+          <div className="absolute left-4 top-36 z-20 flex items-center gap-2">
+            <img src={pencil} alt="연필" className="w-4 h-4 shrink-0" />
+            <input
+              type="text"
+              value={formData.statusMessage}
+              onChange={(e) =>
+                handleTextChange("statusMessage", e.target.value.slice(0, 20))
+              }
+              maxLength={20}
+              placeholder="지금의 상태를 한 줄로 적어봐요!"
+              className="px-0 py-0 border-0 border-b border-white/60 bg-transparent text-[14px] text-white placeholder-white/70 focus:outline-none"
+              style={{
+                width: formData.statusMessage
+                  ? `${Math.min(formData.statusMessage.length, 20) * 8.4 + 20}px`
+                  : "220px",
+              }}
+            />
           </div>
         </div>
 
         {/* Form Content */}
-        <div className="pt-[40px] px-4 pb-6 space-y-6">
-          {/* 상태 메시지 */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#191919] mb-2">
-              상태
-            </label>
-            <textarea
-              value={formData.statusMessage}
-              onChange={(e) =>
-                handleTextChange("statusMessage", e.target.value)
-              }
-              placeholder="상태 메시지를 입력해주세요"
-              className="w-full px-3 py-2 border border-[#E5E5E5] rounded-lg text-[14px] text-[#191919] placeholder-[#B5B5B5] focus:outline-none focus:border-[#800025] resize-none"
-              rows={2}
-            />
-          </div>
-
+        <div className="pt-20 px-4 pb-6 space-y-6">
           {/* 아이디 */}
-          <div>
+          <div className="mb-6">
             <div className="flex items-center gap-1 mb-2">
-              <label className="block text-[12px] font-medium text-[#191919]">
+              <label className="text-neutral-500 text-sm font-medium font-['Pretendard']">
                 아이디
               </label>
               <span className="text-[#800025] text-[12px]">*</span>
@@ -305,77 +495,153 @@ export default function EditProfile() {
               disabled
               className="w-full px-3 py-2 border border-[#E5E5E5] rounded-lg text-[14px] text-[#B5B5B5] bg-[#F9F9F9] cursor-not-allowed"
             />
-            <p className="text-[12px] text-[#B5B5B5] mt-1">
-              아이디는 변경할 수 없습니다
-            </p>
           </div>
 
           {/* 닉네임 */}
-          <div>
+          <div className="mb-6">
             <div className="flex items-center gap-1 mb-2">
-              <label className="block text-[12px] font-medium text-[#191919]">
+              <label className="text-neutral-500 text-sm font-medium font-['Pretendard']">
                 닉네임
               </label>
-              <span className="text-[#800025] text-[12px]">*</span>
+              <span className="text-rose-900 text-base font-medium font-['Pretendard']">
+                *
+              </span>
             </div>
-            <input
-              type="text"
-              value={formData.nickname}
-              onChange={(e) => handleTextChange("nickname", e.target.value)}
-              placeholder="닉네임을 입력해주세요"
-              className="w-full px-3 py-2 border border-[#E5E5E5] rounded-lg text-[14px] text-[#191919] placeholder-[#B5B5B5] focus:outline-none focus:border-[#800025]"
-            />
+            <div className="flex gap-2 border-b px-1 py-3 justify-between items-center border-zinc-400 transition focus-within:border-rose-900">
+              <div className="flex items-center m-0 flex-1 relative">
+                <input
+                  type="text"
+                  value={formData.nickname}
+                  onChange={handleNicknameChange}
+                  placeholder="닉네임을 입력해주세요."
+                  className="w-full text-zinc-900 text-base font-medium placeholder:text-zinc-400 placeholder:text-base placeholder:font-medium font-['Pretendard'] focus:outline-none caret-rose-900"
+                />
+                {formData.nickname && (
+                  <button onClick={handleClearNickname} className="ml-2">
+                    <img
+                      src={cancelIcon}
+                      alt="clear"
+                      className="w-5 h-5 m-0.5"
+                    />
+                  </button>
+                )}
+              </div>
+            </div>
+            {nicknameErrors.length > 0 && (
+              <div className="mt-2">
+                {nicknameErrors.map((error, index) => (
+                  <p
+                    key={index}
+                    className="text-red-500 text-sm font-medium font-['Pretendard']"
+                  >
+                    {error}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 생일 */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#191919] mb-2">
+          <div className="mb-6">
+            <label className="text-neutral-500 text-sm font-medium font-['Pretendard'] block mb-2">
               생일
             </label>
-            <input
-              type="date"
-              value={formData.birthDate}
-              onChange={(e) => handleTextChange("birthDate", e.target.value)}
-              className="w-full px-3 py-2 border border-[#E5E5E5] rounded-lg text-[14px] text-[#191919] focus:outline-none focus:border-[#800025]"
-            />
+            <div className="flex gap-2 border-b px-1 py-3 justify-between items-center border-zinc-400 transition focus-within:border-rose-900">
+              <div className="flex items-center flex-1 relative">
+                <input
+                  type="text"
+                  value={formData.birthDate}
+                  onChange={handleBirthDateChange}
+                  placeholder="YYYY.MM.DD"
+                  className="w-full text-zinc-900 text-base font-medium placeholder:text-zinc-400 placeholder:text-base placeholder:font-medium font-['Pretendard'] focus:outline-none caret-rose-900"
+                />
+                {formData.birthDate && (
+                  <button onClick={handleClearBirthDate} className="ml-2">
+                    <img
+                      src={cancelIcon}
+                      alt="clear"
+                      className="w-5 h-5 m-0.5"
+                    />
+                  </button>
+                )}
+              </div>
+            </div>
+            {birthDateErrors.length > 0 && (
+              <div className="mt-2">
+                {birthDateErrors.map((error, index) => (
+                  <p
+                    key={index}
+                    className="text-red-500 text-sm font-medium font-['Pretendard']"
+                  >
+                    {error}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 키/몸무게 */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#191919] mb-2">
+          <div className="mb-6">
+            <label className="text-neutral-500 text-sm font-medium font-['Pretendard'] block mb-2">
               키 / 몸무게
             </label>
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <input
-                  type="number"
-                  value={formData.heightCm}
-                  onChange={(e) => handleTextChange("heightCm", e.target.value)}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-[#E5E5E5] rounded-lg text-[14px] text-[#191919] placeholder-[#B5B5B5] focus:outline-none focus:border-[#800025] text-right"
-                />
-                <p className="text-[12px] text-[#B5B5B5] mt-1 text-center">
-                  cm
-                </p>
+            <div className="flex gap-4">
+              <div>
+                <div className="flex gap-2 px-1 py-3 items-center">
+                  <input
+                    type="number"
+                    value={formData.heightCm}
+                    onChange={handleHeightCmChange}
+                    onBlur={handleHeightCmBlur}
+                    placeholder="0"
+                    className="w-13 border-b border-zinc-400 text-zinc-900 text-base font-medium placeholder:text-zinc-400 placeholder:text-base placeholder:font-medium font-['Pretendard'] focus:outline-none focus:border-rose-900 caret-rose-900 text-right transition"
+                  />
+                  <span className="text-zinc-400 text-base font-medium font-['Pretendard'] ml-2">
+                    cm
+                  </span>
+                </div>
               </div>
-              <div className="flex-1">
-                <input
-                  type="number"
-                  value={formData.weightKg}
-                  onChange={(e) => handleTextChange("weightKg", e.target.value)}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-[#E5E5E5] rounded-lg text-[14px] text-[#191919] placeholder-[#B5B5B5] focus:outline-none focus:border-[#800025] text-right"
-                />
-                <p className="text-[12px] text-[#B5B5B5] mt-1 text-center">
-                  kg
-                </p>
+              <div>
+                <div className="flex gap-2 px-1 py-3 items-center">
+                  <input
+                    type="number"
+                    value={formData.weightKg}
+                    onChange={handleWeightKgChange}
+                    onBlur={handleWeightKgBlur}
+                    placeholder="0"
+                    className="w-13 border-b border-zinc-400 text-zinc-900 text-base font-medium placeholder:text-zinc-400 placeholder:text-base placeholder:font-medium font-['Pretendard'] focus:outline-none focus:border-rose-900 caret-rose-900 text-right transition"
+                  />
+                  <span className="text-zinc-400 text-base font-medium font-['Pretendard'] ml-2">
+                    kg
+                  </span>
+                </div>
               </div>
             </div>
+            {(heightCmErrors.length > 0 || weightKgErrors.length > 0) && (
+              <div className="mt-2 space-y-1">
+                {heightCmErrors.map((error, index) => (
+                  <p
+                    key={`height-${index}`}
+                    className="text-red-500 text-sm font-medium font-['Pretendard']"
+                  >
+                    {error}
+                  </p>
+                ))}
+                {weightKgErrors.map((error, index) => (
+                  <p
+                    key={`weight-${index}`}
+                    className="text-red-500 text-sm font-medium font-['Pretendard']"
+                  >
+                    {error}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 계정 공개 여부 */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#191919] mb-2">
+          <div className="mb-6">
+            <label className="text-neutral-500 text-sm font-medium font-['Pretendard'] block mb-2">
               계정 공개 여부
             </label>
             <button
@@ -401,69 +667,8 @@ export default function EditProfile() {
 
             {/* 공개 범위 설명 */}
             <p className="text-[12px] text-[#B5B5B5] mt-2">
-              계정 비공개로 설정하면 팔로워와 차단된 사용자에게 프로필이
-              표시됩니다
+              계정을 비공개로 설정하면 팔로워에게만 내 콘텐츠가 공개돼요.
             </p>
-          </div>
-
-          {/* 공개 범위 설정들 */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <label className="text-[12px] text-[#191919] font-medium">
-                생일 공개
-              </label>
-              <button
-                type="button"
-                onClick={() => handleToggleChange("isBirthPublic")}
-                className={`w-10 h-6 rounded-full transition-colors ${
-                  formData.isBirthPublic ? "bg-[#800025]" : "bg-[#E5E5E5]"
-                } flex items-center px-1`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    formData.isBirthPublic ? "translate-x-4" : ""
-                  }`}
-                />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="text-[12px] text-[#191919] font-medium">
-                키 공개
-              </label>
-              <button
-                type="button"
-                onClick={() => handleToggleChange("isHeightPublic")}
-                className={`w-10 h-6 rounded-full transition-colors ${
-                  formData.isHeightPublic ? "bg-[#800025]" : "bg-[#E5E5E5]"
-                } flex items-center px-1`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    formData.isHeightPublic ? "translate-x-4" : ""
-                  }`}
-                />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="text-[12px] text-[#191919] font-medium">
-                몸무게 공개
-              </label>
-              <button
-                type="button"
-                onClick={() => handleToggleChange("isWeightPublic")}
-                className={`w-10 h-6 rounded-full transition-colors ${
-                  formData.isWeightPublic ? "bg-[#800025]" : "bg-[#E5E5E5]"
-                } flex items-center px-1`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    formData.isWeightPublic ? "translate-x-4" : ""
-                  }`}
-                />
-              </button>
-            </div>
           </div>
         </div>
 
