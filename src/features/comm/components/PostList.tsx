@@ -39,13 +39,12 @@ type EmptyVariant = "community" | "mypage";
 
 type PostListProps = {
   contentType: ContentType;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fetchFeeds: () => Promise<{ code: number; result: { feeds: any[] } }>;
   emptyVariant?: EmptyVariant;
   emptyText?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mapItem?: (raw: any) => FeedItem;
   searchKeyword?: string;
+  reloadKey?: string | number;
 };
 
 type PostContent = {
@@ -107,6 +106,7 @@ export default function PostList({
   emptyText,
   mapItem,
   searchKeyword,
+  reloadKey,
 }: PostListProps) {
   const navigate = useNavigate();
 
@@ -208,8 +208,7 @@ export default function PostList({
 
   useEffect(() => {
     loadFeeds();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [contentType, searchKeyword, reloadKey]);
 
   // 게시글 좋아요/싫어요 토글
   const handleToggleReaction = async (feedId: number, like: boolean) => {
@@ -331,7 +330,8 @@ export default function PostList({
           });
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const isQuoted = (item as any).kind === "QUOTE" || (item as any).kind === "REPOST";
+          const isQuoted =
+            (item as any).kind === "QUOTE" || (item as any).kind === "REPOST";
 
           return (
             <div
