@@ -1,14 +1,27 @@
 import axiosInstance from "./axiosInstance";
 
-// KAKAO_AUTH_URL
+// AUTH_URL
 const REST_API_KEY = "9ac25a37f735552809d85c147c94bf37";
-const REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI;
 
-export const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
+const NAVER_CLIENT_ID = "LI66hvPIvWQQ0aBYQhfR";
+const STATE = "random_string_123";
 
+const currentOrigin = window.location.origin;
+
+export const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${currentOrigin}/auth/kakao/callback&response_type=code`;
+export const NAVER_AUTH_URL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${currentOrigin}/auth/naver/callback&state=${STATE}`;
 // 카카오 인가 코드를 서버로 보내고 토큰을 받는 함수
 export const loginWithKakao = async (code: string) => {
   const response = await axiosInstance.get(`/auth/kakao/callback?code=${code}`);
+  return response.data;
+};
+
+// 네이버 인가 코드를 서버로 보내는 함수 추가
+export const loginWithNaver = async (code: string, state: string) => {
+  // GET 요청 (Query String: code, state)
+  const response = await axiosInstance.get(`/auth/naver/callback`, {
+    params: { code, state },
+  });
   return response.data;
 };
 

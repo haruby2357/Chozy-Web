@@ -67,6 +67,7 @@ export default function MyPageSearchResult() {
             emptyText={
               tab === "reviews" ? "검색 결과가 없어요." : "검색 결과가 없어요."
             }
+            reloadKey={tab}
           />
         </div>
       </div>

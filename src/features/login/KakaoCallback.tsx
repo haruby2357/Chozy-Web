@@ -47,7 +47,9 @@ export default function KakaoCallback() {
     <div className="flex items-center justify-center min-h-screen">
       {/* 로그인 처리 중임을 알려주는 간단한 UI */}
       <div className="text-center">
-        <p className="text-lg font-medium">카카오 로그인 처리 중...</p>
+        <p className="text-lg font-medium font-['Pretendard']">
+          카카오 로그인 처리 중...
+        </p>
       </div>
     </div>
   );

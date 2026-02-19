@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, KAKAO_AUTH_URL } from "../../api/auth";
+import { login, KAKAO_AUTH_URL, NAVER_AUTH_URL } from "../../api/auth";
 
 import logoIcon from "../../assets/login/logo.svg";
 import cancelIcon from "../../assets/all/cancel.svg";
@@ -90,6 +90,10 @@ export default function Login() {
 
   const handleKakaoLogin = () => {
     window.location.href = KAKAO_AUTH_URL;
+  };
+
+  const handleNaverLogin = () => {
+    window.location.href = NAVER_AUTH_URL;
   };
 
   return (
@@ -198,7 +202,7 @@ export default function Login() {
       </form>
 
       <div className="flex gap-2 mt-15">
-        <button type="button" onClick={() => {}}>
+        <button type="button" onClick={handleNaverLogin}>
           <img src={naverIcon} className="w-12 h-12" />
         </button>
         <button type="button" onClick={handleKakaoLogin}>
