@@ -2,15 +2,17 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BottomSheet from "./BottomSheet";
 import SheetRow from "./SheetRow";
-import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
-import SuccessModal from "../../../components/SuccessModal";
 
 import notInterestedIcon from "../../../assets/community/notInterested.svg";
 import blockIcon from "../../../assets/community/block.svg";
 import editIcon from "../../../assets/community/edit.svg";
 import deleteIcon from "../../../assets/community/delete.svg";
 
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
+import SuccessModal from "../../../components/SuccessModal";
+import { deleteFeed } from "../../../api/domains/community/etc/api";
 import { blockUser } from "../../../api/domains/community/etc/blocks/api";
+import { muteUser } from "../../../api/domains/community/etc/mutes";
 
 type Props = {
   open: boolean;
@@ -32,40 +34,48 @@ export default function FeedEtcSheet({
   onBlocked,
 }: Props) {
   const navigate = useNavigate();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [, setBlockDoneOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [doneOpen, setDoneOpen] = useState(false);
+  const [blockDoneOpen, setBlockDoneOpen] = useState(false);
+  const [muteDoneOpen, setMuteDoneOpen] = useState(false);
 
   const handleEdit = () => {
     onClose();
   };
 
-  const handleDelete = async () => {
+  // 삭제하기
+  const onClickDelete = () => {
     onClose();
-    setShowDeleteConfirm(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    setShowDeleteConfirm(false);
-    onClose();
-
-    try {
-      setShowSuccess(true);
-      setTimeout(() => {
-        navigate(-1);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-    }
+    setConfirmOpen(true);
   };
 
   const handleCancelDelete = () => {
-    setShowDeleteConfirm(false);
+    if (deleting) return;
+    setConfirmOpen(false);
   };
 
-  const handleNotInterested = async () => {
-    onClose();
-    console.log("not interested", feedId);
+  const handleConfirmDelete = async () => {
+    if (deleting) return;
+
+    try {
+      setDeleting(true);
+      await deleteFeed(feedId);
+
+      setConfirmOpen(false);
+      setDoneOpen(true);
+
+      window.setTimeout(() => {
+        setDoneOpen(false);
+        onBlocked?.();
+        navigate("/community", { replace: true });
+      }, 900);
+    } catch (e: any) {
+      console.error("게시글 삭제 실패:", e);
+      alert(e?.message ?? "게시글 삭제에 실패했어요.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // 차단
@@ -93,6 +103,31 @@ export default function FeedEtcSheet({
     }
   };
 
+  // 관심없음
+  const handleNotInterested = async () => {
+    onClose();
+
+    try {
+      const data = await muteUser(authorUserPk);
+      console.log("muteUser response:", data);
+
+      if (data.code !== 1000) {
+        throw new Error(data.message ?? "관심 없음 처리에 실패했어요.");
+      }
+
+      setMuteDoneOpen(true);
+
+      window.setTimeout(async () => {
+        setMuteDoneOpen(false);
+        onBlocked?.();
+        navigate("/community", { replace: true });
+      }, 900);
+    } catch (e: any) {
+      console.error("관심 없음 실패:", e);
+      alert(e?.message ?? "관심 없음 처리에 실패했어요.");
+    }
+  };
+
   return (
     <>
       <BottomSheet open={open} onClose={onClose}>
@@ -104,7 +139,7 @@ export default function FeedEtcSheet({
                 label="삭제하기"
                 icon={deleteIcon}
                 danger
-                onClick={handleDelete}
+                onClick={onClickDelete}
               />
             </div>
           ) : (
@@ -124,13 +159,19 @@ export default function FeedEtcSheet({
         </div>
       </BottomSheet>
 
-      <DeleteConfirmModal
-        isOpen={showDeleteConfirm}
+      <ConfirmDeleteModal
+        open={confirmOpen}
+        title="정말 삭제하시겠어요?"
+        confirmText={deleting ? "삭제중..." : "예"}
+        cancelText="아니요"
+        confirmDisabled={deleting}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
 
-      <SuccessModal isOpen={showSuccess} message="삭제를 완료했어요" />
+      <SuccessModal isOpen={doneOpen} message="삭제를 완료했어요." />
+      <SuccessModal isOpen={blockDoneOpen} message="차단 완료되었습니다." />
+      <SuccessModal isOpen={muteDoneOpen} message="처리 완료되었습니다." />
     </>
   );
 }
