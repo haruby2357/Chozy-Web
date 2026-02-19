@@ -12,6 +12,7 @@ import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import SuccessModal from "../../../components/SuccessModal";
 import { deleteFeed } from "../../../api/domains/community/etc/api";
 import { blockUser } from "../../../api/domains/community/etc/blocks/api";
+import { muteUser } from "../../../api/domains/community/etc/mutes";
 
 type Props = {
   open: boolean;
@@ -37,6 +38,7 @@ export default function FeedEtcSheet({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
   const [blockDoneOpen, setBlockDoneOpen] = useState(false);
+  const [muteDoneOpen, setMuteDoneOpen] = useState(false);
 
   const handleEdit = () => {
     onClose();
@@ -77,11 +79,6 @@ export default function FeedEtcSheet({
     }
   };
 
-  const handleNotInterested = async () => {
-    onClose();
-    console.log("not interested", feedId);
-  };
-
   // 차단
   const handleBlock = async () => {
     onClose();
@@ -104,6 +101,31 @@ export default function FeedEtcSheet({
     } catch (e: any) {
       console.error("차단 실패:", e);
       alert(e?.message ?? "차단에 실패했어요.");
+    }
+  };
+
+  // 관심없음
+  const handleNotInterested = async () => {
+    onClose();
+
+    try {
+      const data = await muteUser(authorUserPk);
+      console.log("muteUser response:", data);
+
+      if (data.code !== 1000) {
+        throw new Error(data.message ?? "관심 없음 처리에 실패했어요.");
+      }
+
+      setMuteDoneOpen(true);
+
+      window.setTimeout(async () => {
+        setMuteDoneOpen(false);
+        onBlocked?.();
+        navigate("/community", { replace: true });
+      }, 900);
+    } catch (e: any) {
+      console.error("관심 없음 실패:", e);
+      alert(e?.message ?? "관심 없음 처리에 실패했어요.");
     }
   };
 
@@ -150,6 +172,7 @@ export default function FeedEtcSheet({
 
       <SuccessModal isOpen={doneOpen} message="삭제를 완료했어요." />
       <SuccessModal isOpen={blockDoneOpen} message="차단 완료되었습니다." />
+      <SuccessModal isOpen={muteDoneOpen} message="처리 완료되었습니다." />
     </>
   );
 }
