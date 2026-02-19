@@ -44,7 +44,6 @@ export default function AppRouter() {
 
       {/* 로그인 페이지 라우팅 */}
       <Route path="/login" element={<Login />} />
-      <Route path="/callback" element={<KakaoCallback />} />
       <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
       <Route path="/auth/naver/callback" element={<NaverCallback />} />
       <Route path="/login/terms" element={<Terms />} />
