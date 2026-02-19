@@ -44,8 +44,6 @@ export default function FeedEtcSheet({
     onClose();
   };
 
-  console.log("delete feedId:", feedId);
-
   // 삭제하기
   const onClickDelete = () => {
     onClose();
@@ -69,7 +67,8 @@ export default function FeedEtcSheet({
 
       window.setTimeout(() => {
         setDoneOpen(false);
-        navigate(-1);
+        onBlocked?.();
+        navigate("/community", { replace: true });
       }, 900);
     } catch (e: any) {
       console.error("게시글 삭제 실패:", e);
