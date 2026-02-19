@@ -1,6 +1,10 @@
 import axiosInstance from "../../axiosInstance";
 import type { ApiResponse } from "../../client/types";
-import type { MyProfile, MyPageFeedsResult, UpdateProfileRequest } from "./types";
+import type {
+  MyProfile,
+  MyPageFeedsResult,
+  UpdateProfileRequest,
+} from "./types";
 
 // 프로필 조회
 export async function getMyProfile() {
