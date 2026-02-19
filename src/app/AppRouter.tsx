@@ -22,6 +22,7 @@ import EditProfile from "../features/myPage/EditProfile";
 import Notifications from "../features/alerts/Notifications";
 import Setting from "../features/myPage/components/Setting";
 import PostWrite from "../features/comm/PostWrite";
+import QuoteWrite from "../features/comm/QuoteWrite";
 import LikePost from "../features/myPage/components/setting/LikePost";
 import BlockedAccounts from "../features/myPage/components/setting/BlockedAccounts";
 import WithdrawAccount from "../features/myPage/components/setting/WithdrawAccount";
@@ -66,6 +67,7 @@ export default function AppRouter() {
       {/* 커뮤니티 페이지 라우팅 */}
       <Route path="/community" element={<CommMain />} />
       <Route path="/community/feeds/:feedId" element={<PostDetail />} />
+      <Route path="/community/feeds/:feedId/quote" element={<QuoteWrite />} />
       <Route path="/community/post-write" element={<PostWrite />} />
       <Route path="/review-write" element={<ReviewWrite />} />
 
